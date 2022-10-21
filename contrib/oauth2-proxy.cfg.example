@@ -102,3 +102,9 @@
 # cookie_refresh = ""
 # cookie_secure = true
 # cookie_httponly = true
+
+
+## Cors settings
+# cors_origin = "http://*.mydomain.com"
+# cors_headers = "*"
+# cors_credentials = "true"
