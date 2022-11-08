@@ -41,19 +41,10 @@ type AlphaOptions struct {
 	// To use the secure server you must configure a TLS certificate and key.
 	MetricsServer Server `json:"metricsServer,omitempty"`
 
-	// Providers is used to configure multiple providers.
+	// Providers are used to configure multiple providers.
 	Providers Providers `json:"providers,omitempty"`
-}
 
-// MergeInto replaces alpha options in the Options struct with the values
-// from the AlphaOptions
-func (a *AlphaOptions) MergeInto(opts *Options) {
-	opts.UpstreamServers = a.UpstreamConfig
-	opts.InjectRequestHeaders = a.InjectRequestHeaders
-	opts.InjectResponseHeaders = a.InjectResponseHeaders
-	opts.Server = a.Server
-	opts.MetricsServer = a.MetricsServer
-	opts.Providers = a.Providers
+	Matching []Matching `json:"matching,omitempty"`
 }
 
 // ExtractFrom populates the fields in the AlphaOptions with the values from
@@ -65,4 +56,10 @@ func (a *AlphaOptions) ExtractFrom(opts *Options) {
 	a.Server = opts.Server
 	a.MetricsServer = opts.MetricsServer
 	a.Providers = opts.Providers
+}
+
+func NewAlphaOptions() *AlphaOptions {
+	return &AlphaOptions{
+		Server: ServerDefaults(),
+	}
 }

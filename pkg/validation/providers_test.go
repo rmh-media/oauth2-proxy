@@ -34,7 +34,7 @@ var _ = Describe("Providers", func() {
 	missingProvider := "at least one provider has to be defined"
 	emptyIDMsg := "provider has empty id: ids are required for all providers"
 	duplicateProviderIDMsg := "multiple providers found with id ProviderID: provider ids must be unique"
-	skipButtonAndMultipleProvidersMsg := "SkipProviderButton and multiple providers are mutually exclusive"
+	skipButtonAndMultipleProvidersMsg := "SkipProviderButton and multiple providers exclude each other if no matching groups are configured"
 
 	DescribeTable("validateProviders",
 		func(o *validateProvidersTableInput) {

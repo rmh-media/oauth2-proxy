@@ -585,7 +585,7 @@ func NewSignInPageTest(skipProvider bool) (*SignInPageTest, error) {
 	var sipTest SignInPageTest
 
 	sipTest.opts = baseTestOptions()
-	sipTest.opts.SkipProviderButton = skipProvider
+	sipTest.opts.Server.SkipProviderButton = skipProvider
 	err := validation.Validate(sipTest.opts)
 	if err != nil {
 		return nil, err
@@ -1887,7 +1887,7 @@ func TestGetJwtSession(t *testing.T) {
 				},
 			},
 		}
-		opts.SkipJwtBearerTokens = true
+		opts.Server.SkipJwtBearerTokens = true
 		opts.SetJWTBearerVerifiers(append(opts.GetJWTBearerVerifiers(), internalVerifier))
 	})
 	if err != nil {
@@ -2471,10 +2471,10 @@ func TestApiRoutes(t *testing.T) {
 			},
 		},
 	}
-	opts.APIRoutes = []string{
+	opts.Server.APIRoutes = []string{
 		"^/api",
 	}
-	opts.SkipProviderButton = true
+	opts.Server.SkipProviderButton = true
 	err := validation.Validate(opts)
 	assert.NoError(t, err)
 	proxy, err := NewOAuthProxy(opts, func(_ string) bool { return true })

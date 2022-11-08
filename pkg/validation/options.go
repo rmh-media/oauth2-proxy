@@ -18,18 +18,18 @@ import (
 
 // Validate checks that required options are set and validates those that they
 // are of the correct format
-func Validate(o *options.Options) error {
-	msgs := validateCookie(o.Cookie)
+func Validate(o *options.AlphaOptions) error {
+	msgs := validateCookie(o.Server.Cookie)
 	msgs = append(msgs, validateSessionCookieMinimal(o)...)
 	msgs = append(msgs, validateRedisSessionStore(o)...)
 	msgs = append(msgs, prefixValues("injectRequestHeaders: ", validateHeaders(o.InjectRequestHeaders)...)...)
 	msgs = append(msgs, prefixValues("injectResponseHeaders: ", validateHeaders(o.InjectResponseHeaders)...)...)
 	msgs = append(msgs, validateProviders(o)...)
 	msgs = append(msgs, validateAPIRoutes(o)...)
-	msgs = configureLogger(o.Logging, msgs)
+	msgs = configureLogger(o.Server.Logging, msgs)
 	msgs = parseSignatureKey(o, msgs)
 
-	if o.SSLInsecureSkipVerify {
+	if o.Server.SSLInsecureSkipVerify {
 		// InsecureSkipVerify is a configurable option we allow
 		/* #nosec G402 */
 		insecureTransport := &http.Transport{
@@ -51,16 +51,16 @@ func Validate(o *options.Options) error {
 		}
 	}
 
-	if o.AuthenticatedEmailsFile == "" && len(o.EmailDomains) == 0 && o.HtpasswdFile == "" {
+	if o.Server.AuthenticatedEmailsFile == "" && len(o.Server.EmailDomains) == 0 && o.Server.HtpasswdFile == "" {
 		msgs = append(msgs, "missing setting for email validation: email-domain or authenticated-emails-file required."+
 			"\n      use email-domain=* to authorize all email addresses")
 	}
 
-	if o.SkipJwtBearerTokens {
+	if o.Server.SkipJwtBearerTokens {
 		// Configure extra issuers
-		if len(o.ExtraJwtIssuers) > 0 {
+		if len(o.Server.ExtraJwtIssuers) > 0 {
 			var jwtIssuers []jwtIssuer
-			jwtIssuers, msgs = parseJwtIssuers(o.ExtraJwtIssuers, msgs)
+			jwtIssuers, msgs = parseJwtIssuers(o.Server.ExtraJwtIssuers, msgs)
 			for _, jwtIssuer := range jwtIssuers {
 				verifier, err := newVerifierFromJwtIssuer(
 					o.Providers[0].OIDCConfig.AudienceClaims,
@@ -76,18 +76,18 @@ func Validate(o *options.Options) error {
 	}
 
 	var redirectURL *url.URL
-	redirectURL, msgs = parseURL(o.RawRedirectURL, "redirect", msgs)
+	redirectURL, msgs = parseURL(o.Server.RawRedirectURL, "redirect", msgs)
 	o.SetRedirectURL(redirectURL)
-	if o.RawRedirectURL == "" && !o.Cookie.Secure && !o.ReverseProxy {
+	if o.Server.RawRedirectURL == "" && !o.Server.Cookie.Secure && !o.Server.ReverseProxy {
 		logger.Print("WARNING: no explicit redirect URL: redirects will default to insecure HTTP")
 	}
 
-	msgs = append(msgs, validateUpstreams(o.UpstreamServers)...)
+	msgs = append(msgs, validateUpstreams(o.UpstreamConfig)...)
 
-	if o.ReverseProxy {
-		parser, err := ip.GetRealClientIPParser(o.RealClientIPHeader)
+	if o.Server.ReverseProxy {
+		parser, err := ip.GetRealClientIPParser(o.Server.RealClientIPHeader)
 		if err != nil {
-			msgs = append(msgs, fmt.Sprintf("real_client_ip_header (%s) not accepted parameter value: %v", o.RealClientIPHeader, err))
+			msgs = append(msgs, fmt.Sprintf("real_client_ip_header (%s) not accepted parameter value: %v", o.Server.RealClientIPHeader, err))
 		}
 		o.SetRealClientIPParser(parser)
 
@@ -107,23 +107,23 @@ func Validate(o *options.Options) error {
 	return nil
 }
 
-func parseSignatureKey(o *options.Options, msgs []string) []string {
-	if o.SignatureKey == "" {
+func parseSignatureKey(o *options.AlphaOptions, msgs []string) []string {
+	if o.Server.SignatureKey == "" {
 		return msgs
 	}
 
 	logger.Print("WARNING: `--signature-key` is deprecated. It will be removed in a future release")
 
-	components := strings.Split(o.SignatureKey, ":")
+	components := strings.Split(o.Server.SignatureKey, ":")
 	if len(components) != 2 {
 		return append(msgs, "invalid signature hash:key spec: "+
-			o.SignatureKey)
+			o.Server.SignatureKey)
 	}
 
 	algorithm, secretKey := components[0], components[1]
 	hash, err := hmacauth.DigestNameToCryptoHash(algorithm)
 	if err != nil {
-		return append(msgs, "unsupported signature hash algorithm: "+o.SignatureKey)
+		return append(msgs, "unsupported signature hash algorithm: "+o.Server.SignatureKey)
 	}
 	o.SetSignatureData(&options.SignatureData{Hash: hash, Key: secretKey})
 	return msgs

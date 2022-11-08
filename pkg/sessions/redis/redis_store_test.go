@@ -106,7 +106,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 	})
 
 	tests.RunSessionStoreTests(
-		func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+		func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 			// Set the connection URL
 			opts.Type = options.RedisSessionStoreType
 			opts.Redis.ConnectionURL = "redis://" + mr.Addr()
@@ -135,7 +135,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 		})
 
 		tests.RunSessionStoreTests(
-			func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+			func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 				// Set the sentinel connection URL
 				sentinelAddr := "redis://" + ms.Addr()
 				opts.Type = options.RedisSessionStoreType
@@ -157,7 +157,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 
 	Context("with cluster", func() {
 		tests.RunSessionStoreTests(
-			func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+			func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 				clusterAddr := "redis://" + mr.Addr()
 				opts.Type = options.RedisSessionStoreType
 				opts.Redis.ClusterConnectionURLs = []string{clusterAddr}
@@ -185,7 +185,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 		})
 
 		tests.RunSessionStoreTests(
-			func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+			func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 				// Set the connection URL
 				opts.Type = options.RedisSessionStoreType
 				opts.Redis.ConnectionURL = "redis://" + mr.Addr()
@@ -215,7 +215,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 			})
 
 			tests.RunSessionStoreTests(
-				func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+				func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 					// Set the sentinel connection URL
 					sentinelAddr := "redis://" + ms.Addr()
 					opts.Type = options.RedisSessionStoreType
@@ -238,7 +238,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 
 		Context("with cluster", func() {
 			tests.RunSessionStoreTests(
-				func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+				func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 					clusterAddr := "redis://" + mr.Addr()
 					opts.Type = options.RedisSessionStoreType
 					opts.Redis.ClusterConnectionURLs = []string{clusterAddr}
@@ -276,7 +276,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 
 		Context("with standalone", func() {
 			tests.RunSessionStoreTests(
-				func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+				func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 					// Set the connection URL
 					opts.Type = options.RedisSessionStoreType
 					opts.Redis.ConnectionURL = "rediss://" + mr.Addr()
@@ -295,7 +295,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 
 		Context("with cluster", func() {
 			tests.RunSessionStoreTests(
-				func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+				func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 					clusterAddr := "rediss://" + mr.Addr()
 					opts.Type = options.RedisSessionStoreType
 					opts.Redis.ClusterConnectionURLs = []string{clusterAddr}
@@ -333,7 +333,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 
 		Context("with standalone", func() {
 			tests.RunSessionStoreTests(
-				func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+				func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 					// Set the connection URL
 					opts.Type = options.RedisSessionStoreType
 					opts.Redis.ConnectionURL = "rediss://" + mr.Addr()
@@ -352,7 +352,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 
 		Context("with cluster", func() {
 			tests.RunSessionStoreTests(
-				func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+				func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 					clusterAddr := "rediss://" + mr.Addr()
 					opts.Type = options.RedisSessionStoreType
 					opts.Redis.ClusterConnectionURLs = []string{clusterAddr}
@@ -390,7 +390,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 		})
 
 		tests.RunSessionStoreTests(
-			func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+			func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 				// Set the connection URL
 				opts.Type = options.RedisSessionStoreType
 				opts.Redis.ConnectionURL = "redis://" + mr.Addr()
@@ -426,7 +426,7 @@ var _ = Describe("Redis SessionStore Tests", func() {
 		})
 
 		tests.RunSessionStoreTests(
-			func(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+			func(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 				// Set the connection URL
 				opts.Type = options.RedisSessionStoreType
 				opts.Redis.ConnectionURL = "redis://127.0.0.1:" + mr.Port() // func (*Miniredis) StartTLS listens on 127.0.0.1

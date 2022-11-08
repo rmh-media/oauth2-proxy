@@ -16,7 +16,7 @@ import (
 
 var _ = Describe("CSRF Cookie Tests", func() {
 	var (
-		cookieOpts  *options.Cookie
+		cookieOpts  *options.CookieOptions
 		publicCSRF  CSRF
 		privateCSRF *csrf
 	)

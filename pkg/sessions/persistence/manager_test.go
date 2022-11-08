@@ -15,7 +15,7 @@ var _ = Describe("Persistence Manager Tests", func() {
 		ms = tests.NewMockStore()
 	})
 	tests.RunSessionStoreTests(
-		func(_ *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error) {
+		func(_ *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error) {
 			return NewManager(ms, cookieOpts), nil
 		},
 		func(d time.Duration) error {

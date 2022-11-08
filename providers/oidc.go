@@ -22,7 +22,10 @@ type OIDCProvider struct {
 
 // NewOIDCProvider initiates a new OIDCProvider
 func NewOIDCProvider(p *ProviderData, opts options.OIDCOptions) *OIDCProvider {
-	p.ProviderName = "OpenID Connect"
+	if p.ProviderName == "" {
+		p.ProviderName = "OpenID Connect"
+	}
+
 	p.getAuthorizationHeaderFunc = makeOIDCHeader
 
 	return &OIDCProvider{

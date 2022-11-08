@@ -26,7 +26,7 @@ func TestSessionStore(t *testing.T) {
 
 var _ = Describe("NewSessionStore", func() {
 	var opts *options.SessionOptions
-	var cookieOpts *options.Cookie
+	var cookieOpts *options.CookieOptions
 
 	BeforeEach(func() {
 		opts = &options.SessionOptions{}

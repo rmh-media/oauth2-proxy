@@ -101,7 +101,7 @@ redirect_url="http://localhost:4180/oauth2/callback"
 		return &du
 	}
 
-	testExpectedOptions := func() *options.Options {
+	testExpectedOptions := func() *options.AlphaOptions {
 		opts, err := options.NewLegacyOptions().ToOptions()
 		Expect(err).ToNot(HaveOccurred())
 
@@ -172,7 +172,7 @@ redirect_url="http://localhost:4180/oauth2/callback"
 		alphaConfigContent string
 		args               []string
 		extraFlags         func() *pflag.FlagSet
-		expectedOptions    func() *options.Options
+		expectedOptions    func() *options.AlphaOptions
 		expectedErr        error
 	}
 
@@ -240,19 +240,19 @@ redirect_url="http://localhost:4180/oauth2/callback"
 		}),
 		Entry("with bad legacy configuration", loadConfigurationTableInput{
 			configContent:   testCoreConfig + "unknown_field=\"something\"",
-			expectedOptions: func() *options.Options { return nil },
+			expectedOptions: func() *options.AlphaOptions { return nil },
 			expectedErr:     errors.New("failed to load config: error unmarshalling config: 1 error(s) decoding:\n\n* '' has invalid keys: unknown_field"),
 		}),
 		Entry("with bad alpha configuration", loadConfigurationTableInput{
 			configContent:      testCoreConfig,
 			alphaConfigContent: testAlphaConfig + ":",
-			expectedOptions:    func() *options.Options { return nil },
+			expectedOptions:    func() *options.AlphaOptions { return nil },
 			expectedErr:        fmt.Errorf("failed to load alpha options: error unmarshalling config: error converting YAML to JSON: yaml: line %d: did not find expected key", strings.Count(testAlphaConfig, "\n")),
 		}),
 		Entry("with alpha configuration and bad core configuration", loadConfigurationTableInput{
 			configContent:      testCoreConfig + "unknown_field=\"something\"",
 			alphaConfigContent: testAlphaConfig,
-			expectedOptions:    func() *options.Options { return nil },
+			expectedOptions:    func() *options.AlphaOptions { return nil },
 			expectedErr:        errors.New("failed to load core options: failed to load config: error unmarshalling config: 1 error(s) decoding:\n\n* '' has invalid keys: unknown_field"),
 		}),
 	)

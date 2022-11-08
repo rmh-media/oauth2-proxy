@@ -44,7 +44,7 @@ type csrf struct {
 	// authentication code.
 	CodeVerifier string `msgpack:"cv,omitempty"`
 
-	cookieOpts *options.Cookie
+	cookieOpts *options.CookieOptions
 	time       clock.Clock
 }
 
@@ -52,7 +52,7 @@ type csrf struct {
 const csrfStateLength int = 9
 
 // NewCSRF creates a CSRF with random nonces
-func NewCSRF(opts *options.Cookie, codeVerifier string) (CSRF, error) {
+func NewCSRF(opts *options.CookieOptions, codeVerifier string) (CSRF, error) {
 	state, err := encryption.Nonce(32)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func NewCSRF(opts *options.Cookie, codeVerifier string) (CSRF, error) {
 }
 
 // LoadCSRFCookie loads a CSRF object from a request's CSRF cookie
-func LoadCSRFCookie(req *http.Request, opts *options.Cookie) (CSRF, error) {
+func LoadCSRFCookie(req *http.Request, opts *options.CookieOptions) (CSRF, error) {
 
 	cookieName := GenerateCookieName(req, opts)
 
@@ -86,7 +86,7 @@ func LoadCSRFCookie(req *http.Request, opts *options.Cookie) (CSRF, error) {
 
 // GenerateCookieName in case cookie options state that CSRF cookie has fixed name then set fixed name, otherwise
 // build name based on the state
-func GenerateCookieName(req *http.Request, opts *options.Cookie) string {
+func GenerateCookieName(req *http.Request, opts *options.CookieOptions) string {
 	stateSubstring := ""
 	if opts.CSRFPerRequest {
 		// csrfCookieName will include a substring of the state to enable multiple csrf cookies
@@ -176,8 +176,8 @@ func (c *csrf) encodeCookie() (string, error) {
 
 // decodeCSRFCookie validates the signature then decrypts and decodes a CSRF
 // cookie into a CSRF struct
-func decodeCSRFCookie(cookie *http.Cookie, opts *options.Cookie) (*csrf, error) {
-	val, _, ok := encryption.Validate(cookie, opts.Secret, opts.Expire)
+func decodeCSRFCookie(cookie *http.Cookie, opts *options.CookieOptions) (*csrf, error) {
+	val, _, ok := encryption.Validate(cookie, opts.Secret, opts.Expire.Duration())
 	if !ok {
 		return nil, errors.New("CSRF cookie failed validation")
 	}
@@ -206,7 +206,7 @@ func (c *csrf) cookieName() string {
 	return csrfCookieName(c.cookieOpts, stateSubstring)
 }
 
-func csrfCookieName(opts *options.Cookie, stateSubstring string) string {
+func csrfCookieName(opts *options.CookieOptions, stateSubstring string) string {
 	if stateSubstring == "" {
 		return fmt.Sprintf("%v_csrf", opts.Name)
 	}
@@ -228,7 +228,7 @@ func ExtractStateSubstring(req *http.Request) string {
 	return stateSubstring
 }
 
-func encrypt(data []byte, opts *options.Cookie) ([]byte, error) {
+func encrypt(data []byte, opts *options.CookieOptions) ([]byte, error) {
 	cipher, err := makeCipher(opts)
 	if err != nil {
 		return nil, err
@@ -236,7 +236,7 @@ func encrypt(data []byte, opts *options.Cookie) ([]byte, error) {
 	return cipher.Encrypt(data)
 }
 
-func decrypt(data []byte, opts *options.Cookie) ([]byte, error) {
+func decrypt(data []byte, opts *options.CookieOptions) ([]byte, error) {
 	cipher, err := makeCipher(opts)
 	if err != nil {
 		return nil, err
@@ -244,6 +244,6 @@ func decrypt(data []byte, opts *options.Cookie) ([]byte, error) {
 	return cipher.Decrypt(data)
 }
 
-func makeCipher(opts *options.Cookie) (encryption.Cipher, error) {
+func makeCipher(opts *options.CookieOptions) (encryption.Cipher, error) {
 	return encryption.NewCFBCipher(encryption.SecretBytes(opts.Secret))
 }

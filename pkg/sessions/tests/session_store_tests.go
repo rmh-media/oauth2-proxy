@@ -21,7 +21,7 @@ import (
 // Ginkgo has unpacked the tests.
 // Interfaces have to be wrapped in closures otherwise nil pointers are thrown.
 type testInput struct {
-	cookieOpts            *options.Cookie
+	cookieOpts            *options.CookieOptions
 	ss                    sessionStoreFunc
 	session               *sessionsapi.SessionState
 	request               *http.Request
@@ -38,7 +38,7 @@ type PersistentStoreFastForwardFunc func(time.Duration) error
 
 // NewSessionStoreFunc allows any session store implementation to configure their
 // own session store before each test.
-type NewSessionStoreFunc func(sessionOpts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error)
+type NewSessionStoreFunc func(sessionOpts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error)
 
 func RunSessionStoreTests(newSS NewSessionStoreFunc, persistentFastForward PersistentStoreFastForwardFunc) {
 	Describe("Session Store Suite", func() {

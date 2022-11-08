@@ -78,22 +78,6 @@ type Options struct {
 	realClientIPParser ipapi.RealClientIPParser
 }
 
-// Options for Getting internal values
-func (o *Options) GetRedirectURL() *url.URL                      { return o.redirectURL }
-func (o *Options) GetSignatureData() *SignatureData              { return o.signatureData }
-func (o *Options) GetOIDCVerifier() internaloidc.IDTokenVerifier { return o.oidcVerifier }
-func (o *Options) GetJWTBearerVerifiers() []internaloidc.IDTokenVerifier {
-	return o.jwtBearerVerifiers
-}
-func (o *Options) GetRealClientIPParser() ipapi.RealClientIPParser { return o.realClientIPParser }
-
-// Options for Setting internal values
-func (o *Options) SetRedirectURL(s *url.URL)                              { o.redirectURL = s }
-func (o *Options) SetSignatureData(s *SignatureData)                      { o.signatureData = s }
-func (o *Options) SetOIDCVerifier(s internaloidc.IDTokenVerifier)         { o.oidcVerifier = s }
-func (o *Options) SetJWTBearerVerifiers(s []internaloidc.IDTokenVerifier) { o.jwtBearerVerifiers = s }
-func (o *Options) SetRealClientIPParser(s ipapi.RealClientIPParser)       { o.realClientIPParser = s }
-
 // NewOptions constructs a new Options with defaulted values
 func NewOptions() *Options {
 	return &Options{
@@ -102,10 +86,8 @@ func NewOptions() *Options {
 		PingPath:           "/ping",
 		RealClientIPHeader: "X-Real-IP",
 		ForceHTTPS:         false,
-		Cookie:             cookieDefaults(),
 		Session:            sessionOptionsDefaults(),
 		Templates:          templatesDefaults(),
-		SkipAuthPreflight:  false,
 		Logging:            loggingDefaults(),
 	}
 }
@@ -119,13 +101,8 @@ func NewFlagSet() *pflag.FlagSet {
 	flagSet.StringSlice("trusted-ip", []string{}, "list of IPs or CIDR ranges to allow to bypass authentication. WARNING: trusting by IP has inherent security flaws, read the configuration documentation for more information.")
 	flagSet.Bool("force-https", false, "force HTTPS redirect for HTTP requests")
 	flagSet.String("redirect-url", "", "the OAuth Redirect URL. ie: \"https://internalapp.yourcompany.com/oauth2/callback\"")
-	flagSet.StringSlice("skip-auth-regex", []string{}, "(DEPRECATED for --skip-auth-route) bypass authentication for requests path's that match (may be given multiple times)")
-	flagSet.StringSlice("skip-auth-route", []string{}, "bypass authentication for requests that match the method & path. Format: method=path_regex OR method!=path_regex. For all methods: path_regex OR !=path_regex")
 	flagSet.StringSlice("api-route", []string{}, "return HTTP 401 instead of redirecting to authentication server if token is not valid. Format: path_regex")
-	flagSet.Bool("skip-provider-button", false, "will skip sign-in-page to directly reach the next step: oauth/start")
-	flagSet.Bool("skip-auth-preflight", false, "will skip authentication for OPTIONS requests")
 	flagSet.Bool("ssl-insecure-skip-verify", false, "skip validation of certificates presented when using HTTPS providers")
-	flagSet.Bool("skip-jwt-bearer-tokens", false, "will skip requests that have verified JWT bearer tokens (default false)")
 	flagSet.Bool("force-json-errors", false, "will force JSON errors instead of HTTP error pages or redirects")
 	flagSet.StringSlice("extra-jwt-issuers", []string{}, "if skip-jwt-bearer-tokens is set, a list of extra JWT issuer=audience pairs (where the issuer URL has a .well-known/openid-configuration or a .well-known/jwks.json)")
 
