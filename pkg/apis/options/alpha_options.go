@@ -60,6 +60,7 @@ func (a *AlphaOptions) ExtractFrom(opts *Options) {
 
 func NewAlphaOptions() *AlphaOptions {
 	return &AlphaOptions{
-		Server: ServerDefaults(),
+		Server:    ServerDefaults(),
+		Providers: providerDefaults(),
 	}
 }

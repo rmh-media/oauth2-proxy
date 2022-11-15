@@ -26,8 +26,6 @@ type Provider struct {
 	// containing the OAuth Client Secret, it will be used if ClientSecret is not set.
 	ClientSecretFile string `json:"clientSecretFile,omitempty"`
 
-	Default bool `json:"default,omitempty"`
-
 	// KeycloakConfig holds all configurations for Keycloak provider.
 	KeycloakConfig KeycloakOptions `json:"keycloakConfig,omitempty"`
 	// AzureConfig holds all configurations for Azure provider.

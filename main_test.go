@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -12,19 +11,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"github.com/spf13/pflag"
 )
 
 var _ = Describe("Configuration Loading Suite", func() {
-	const testLegacyConfig = `
-http_address="127.0.0.1:4180"
-upstreams="http://httpbin"
-set_basic_auth="true"
-basic_auth_password="super-secret-password"
-client_id="oauth2-proxy"
-client_secret="b2F1dGgyLXByb3h5LWNsaWVudC1zZWNyZXQK"
-`
-
 	const testAlphaConfig = `
 upstreamConfig:
   proxyrawpath: false
@@ -43,18 +32,6 @@ injectRequestHeaders:
     prefix: "Basic "
     basicAuthPassword:
       value: c3VwZXItc2VjcmV0LXBhc3N3b3Jk
-- name: X-Forwarded-Groups
-  values:
-  - claim: groups
-- name: X-Forwarded-User
-  values:
-  - claim: user
-- name: X-Forwarded-Email
-  values:
-  - claim: email
-- name: X-Forwarded-Preferred-Username
-  values:
-  - claim: preferred_username
 injectResponseHeaders:
 - name: Authorization
   values:
@@ -84,14 +61,6 @@ providers:
     - force
 `
 
-	const testCoreConfig = `
-cookie_secret="OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w="
-email_domains="example.com"
-cookie_secure="false"
-
-redirect_url="http://localhost:4180/oauth2/callback"
-`
-
 	boolPtr := func(b bool) *bool {
 		return &b
 	}
@@ -105,12 +74,12 @@ redirect_url="http://localhost:4180/oauth2/callback"
 		opts, err := options.NewLegacyOptions().ToOptions()
 		Expect(err).ToNot(HaveOccurred())
 
-		opts.Cookie.Secret = "OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w="
-		opts.EmailDomains = []string{"example.com"}
-		opts.Cookie.Secure = false
-		opts.RawRedirectURL = "http://localhost:4180/oauth2/callback"
+		opts.Server.Cookie.Secret = "OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w="
+		opts.Server.EmailDomains = []string{"example.com"}
+		opts.Server.Cookie.Secure = false
+		opts.Server.RawRedirectURL = "http://localhost:4180/oauth2/callback"
 
-		opts.UpstreamServers = options.UpstreamConfig{
+		opts.UpstreamConfig = options.UpstreamConfig{
 			Upstreams: []options.Upstream{
 				{
 					ID:              "/",
@@ -168,12 +137,9 @@ redirect_url="http://localhost:4180/oauth2/callback"
 	}
 
 	type loadConfigurationTableInput struct {
-		configContent      string
-		alphaConfigContent string
-		args               []string
-		extraFlags         func() *pflag.FlagSet
-		expectedOptions    func() *options.AlphaOptions
-		expectedErr        error
+		configContent   string
+		expectedOptions func() *options.AlphaOptions
+		expectedErr     error
 	}
 
 	DescribeTable("LoadConfiguration",
@@ -191,7 +157,7 @@ redirect_url="http://localhost:4180/oauth2/callback"
 
 			if in.configContent != "" {
 				By("Writing the config to a temporary file", func() {
-					file, err := ioutil.TempFile("", "oauth2-proxy-test-config-XXXX.cfg")
+					file, err := ioutil.TempFile("", "oauth2-proxy-test-config-XXXX.yaml")
 					Expect(err).ToNot(HaveOccurred())
 					defer file.Close()
 
@@ -202,25 +168,7 @@ redirect_url="http://localhost:4180/oauth2/callback"
 				})
 			}
 
-			if in.alphaConfigContent != "" {
-				By("Writing the config to a temporary file", func() {
-					file, err := ioutil.TempFile("", "oauth2-proxy-test-alpha-config-XXXX.yaml")
-					Expect(err).ToNot(HaveOccurred())
-					defer file.Close()
-
-					alphaConfigFileName = file.Name()
-
-					_, err = file.WriteString(in.alphaConfigContent)
-					Expect(err).ToNot(HaveOccurred())
-				})
-			}
-
-			extraFlags := pflag.NewFlagSet("test-flagset", pflag.ExitOnError)
-			if in.extraFlags != nil {
-				extraFlags = in.extraFlags()
-			}
-
-			opts, err := loadConfiguration(configFileName, alphaConfigFileName, extraFlags, in.args)
+			opts, err := loadConfiguration(configFileName)
 			if in.expectedErr != nil {
 				Expect(err).To(MatchError(in.expectedErr.Error()))
 			} else {
@@ -229,31 +177,14 @@ redirect_url="http://localhost:4180/oauth2/callback"
 			Expect(in.expectedOptions).ToNot(BeNil())
 			Expect(opts).To(Equal(in.expectedOptions()))
 		},
-		Entry("with legacy configuration", loadConfigurationTableInput{
-			configContent:   testCoreConfig + testLegacyConfig,
+		Entry("with alpha configuration", loadConfigurationTableInput{
+			configContent:   testAlphaConfig,
 			expectedOptions: testExpectedOptions,
 		}),
-		Entry("with alpha configuration", loadConfigurationTableInput{
-			configContent:      testCoreConfig,
-			alphaConfigContent: testAlphaConfig,
-			expectedOptions:    testExpectedOptions,
-		}),
-		Entry("with bad legacy configuration", loadConfigurationTableInput{
-			configContent:   testCoreConfig + "unknown_field=\"something\"",
+		Entry("with bad configuration", loadConfigurationTableInput{
+			configContent:   testAlphaConfig + ":",
 			expectedOptions: func() *options.AlphaOptions { return nil },
-			expectedErr:     errors.New("failed to load config: error unmarshalling config: 1 error(s) decoding:\n\n* '' has invalid keys: unknown_field"),
-		}),
-		Entry("with bad alpha configuration", loadConfigurationTableInput{
-			configContent:      testCoreConfig,
-			alphaConfigContent: testAlphaConfig + ":",
-			expectedOptions:    func() *options.AlphaOptions { return nil },
-			expectedErr:        fmt.Errorf("failed to load alpha options: error unmarshalling config: error converting YAML to JSON: yaml: line %d: did not find expected key", strings.Count(testAlphaConfig, "\n")),
-		}),
-		Entry("with alpha configuration and bad core configuration", loadConfigurationTableInput{
-			configContent:      testCoreConfig + "unknown_field=\"something\"",
-			alphaConfigContent: testAlphaConfig,
-			expectedOptions:    func() *options.AlphaOptions { return nil },
-			expectedErr:        errors.New("failed to load core options: failed to load config: error unmarshalling config: 1 error(s) decoding:\n\n* '' has invalid keys: unknown_field"),
+			expectedErr:     fmt.Errorf("failed to load alpha options: error unmarshalling config: error converting YAML to JSON: yaml: line %d: did not find expected key", strings.Count(testAlphaConfig, "\n")),
 		}),
 	)
 })

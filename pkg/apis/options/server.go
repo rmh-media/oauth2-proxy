@@ -41,6 +41,7 @@ type Server struct {
 
 	RawRedirectURL string `json:"redirectUrl"`
 
+	APIRoutes           []string `flag:"api-route" cfg:"api_routes"`
 	SkipAuthPreflight   bool
 	SkipProviderButton  bool
 	SkipJwtBearerTokens bool
@@ -49,20 +50,18 @@ type Server struct {
 	SignatureKey    string
 	GCPHealthChecks bool
 
+	// This is used for backwards compatibility for basic auth users
+	LegacyPreferEmailToUser bool
+
 	DefaultProvider  string
 	SkipAuthRoutes   []string
 	WhitelistDomains []string
-
-	APIRoutes []string
 
 	Cors CorsOptions
 
 	ExtraJwtIssuers       []string
 	SSLInsecureSkipVerify bool
 	ForceJSONErrors       bool
-
-	// This is used for backwards compatibility for basic auth users
-	LegacyPreferEmailToUser bool
 
 	// internal values that are set after config validation
 	redirectURL        *url.URL
@@ -138,7 +137,6 @@ func (o *AlphaOptions) SetRealClientIPParser(s ipapi.RealClientIPParser) {
 	o.Server.realClientIPParser = s
 }
 func ServerDefaults() Server {
-
 	server := Server{
 		ProxyPrefix:        "/oauth2",
 		RealClientIPHeader: "X-Real-IP",

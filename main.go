@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/ghodss/yaml"
 	"math/rand"
 	"os"
 	"runtime"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/options"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/logger"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/validation"
@@ -23,9 +23,8 @@ func main() {
 	// ignore any unknown flags for now
 	configFlagSet.ParseErrorsWhitelist.UnknownFlags = true
 
-	oldConfig := configFlagSet.String("old-config", "", "path to config file")
 	config := configFlagSet.String("config", "", "path to alpha config file (use at your own risk - the structure in this config file may change between minor releases)")
-	convertConfig := configFlagSet.Bool("convert-old-config", false, "if true, the proxy will load configuration as normal and convert the old configuration to the new config structure, and print it to stdout")
+	convertConfig := configFlagSet.String("convert-old-config", "", "path to the old config which should be converted to the new yaml format")
 	showVersion := configFlagSet.Bool("version", false, "print version string")
 	configFlagSet.Parse(os.Args[1:])
 
@@ -34,21 +33,27 @@ func main() {
 		return
 	}
 
-	if *convertConfig && *config != "" {
-		logger.Fatal("cannot use alpha-config and convert-config-to-alpha together")
+	if *convertConfig != "" && *config != "" {
+		logger.Fatal("cannot use config and convert-old-config together")
 	}
 
-	opts, err := loadConfiguration(*config, configFlagSet, os.Args[1:])
-	if err != nil {
-		logger.Fatalf("ERROR: %v", err)
-	}
-
-	if *convertConfig {
-		logger.Printf("%v is old config", oldConfig)
-		//if err := printConvertedConfig(opts); err != nil {
+	if *convertConfig != "" {
+		//logger.Printf("%v is old config", convertConfig)
+		//
+		//oldOptions, err := loadLegacyOptions(*convertConfig, configFlagSet, os.Args[1:])
+		//if err != nil {
+		//	logger.Fatalf("ERROR: %v", err)
+		//}
+		//
+		//if err := printConvertedConfig(oldOptions); err != nil {
 		//	logger.Fatalf("ERROR: could not convert config: %v", err)
 		//}
-		return
+		//return
+	}
+
+	opts, err := loadConfiguration(*config)
+	if err != nil {
+		logger.Fatalf("ERROR: %v", err)
 	}
 
 	if err = validation.Validate(opts); err != nil {
@@ -69,14 +74,8 @@ func main() {
 }
 
 // loadConfiguration will load in the user's configuration.
-func loadConfiguration(config string, extraFlags *pflag.FlagSet, args []string) (*options.AlphaOptions, error) {
-	//opts, err := loadOptions(config, extraFlags, args)
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed to load core options: %v", err)
-	//}
-
+func loadConfiguration(config string) (*options.AlphaOptions, error) {
 	opts := options.NewAlphaOptions()
-	opts.Server = options.ServerDefaults()
 	if err := options.LoadYAML(config, opts); err != nil {
 		return nil, fmt.Errorf("failed to load alpha options: %v", err)
 	}
@@ -84,19 +83,25 @@ func loadConfiguration(config string, extraFlags *pflag.FlagSet, args []string) 
 	return opts, nil
 }
 
-// loadOptions loads the configuration using the old style format into the
-// core options.AlphaOptions struct.
-// This means that none of the options that have been converted to alpha config
-// will be loaded using this method.
-func loadOptions(config string, extraFlags *pflag.FlagSet, args []string) (*options.Options, error) {
-
-	optionsFlagSet := options.NewFlagSet()
+// loadLegacyOptions loads the old toml options using the legacy flagset
+// and legacy options struct.
+func loadLegacyOptions(config string, extraFlags *pflag.FlagSet, args []string) (*options.AlphaOptions, error) {
+	optionsFlagSet := options.NewLegacyFlagSet()
 	optionsFlagSet.AddFlagSet(extraFlags)
 	if err := optionsFlagSet.Parse(args); err != nil {
 		return nil, fmt.Errorf("failed to parse flags: %v", err)
 	}
 
-	opts := options.NewOptions()
+	legacyOpts := options.NewLegacyOptions()
+	if err := options.Load(config, optionsFlagSet, legacyOpts); err != nil {
+		return nil, fmt.Errorf("failed to load config: %v", err)
+	}
+
+	opts, err := legacyOpts.ToOptions()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert config: %v", err)
+	}
+
 	return opts, nil
 }
 
