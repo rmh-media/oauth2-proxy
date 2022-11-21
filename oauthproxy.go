@@ -1265,8 +1265,10 @@ func isAjax(req *http.Request) bool {
 // errorJSON returns the error code with an application/json mime type
 func (p *OAuthProxy) errorJSON(rw http.ResponseWriter, req *http.Request, code int) {
 	rw.Header().Set("Content-Type", applicationJSON)
-	if len(p.opts.Server.Cors.AllowedOrigins) > 0 {
-		rw.Header().Set("Access-Control-Allow-Origin", strings.Join(p.opts.Server.Cors.AllowedOrigins, ","))
+	allowedOrigin := p.opts.IsOriginAllowed(req)
+
+	if allowedOrigin != "" {
+		rw.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
 	}
 
 	rw.Header().Set("Access-Control-Allow-Headers", strings.Join(p.opts.Server.Cors.AllowedHeaders, ","))

@@ -1,15 +1,18 @@
 package options
 
-import "net/http"
+import (
+	"net/http"
+	"regexp"
+)
 
 const (
 	TypeDomain = "Domain"
+	TypeRegex  = "Regex"
 )
 
 // Matching is a collection of matchers between provider and domains or uris
 type Matching struct {
-	// ProxyRawPath will pass the raw url path to upstream allowing for url's
-	// like: "/%2F/" which would otherwise be redirected to "/"
+	// Provider is the id of the configured provider
 	Provider string `json:"provider"`
 
 	// Matchers represents the configuration for the Matcher.
@@ -30,6 +33,8 @@ func Match(matcher Matcher, request *http.Request) bool {
 	switch matcher.Type {
 	case TypeDomain:
 		return domainMatch(matcher, request.Host)
+	case TypeRegex:
+		return regexMatch(matcher, request.Host)
 	}
 
 	return false
@@ -38,4 +43,14 @@ func Match(matcher Matcher, request *http.Request) bool {
 // domainMatch will compare the value of the domain matcher with the given host and returns a bool
 func domainMatch(matcher Matcher, host string) bool {
 	return matcher.Value == host
+}
+
+// regexMatch will do a simple regex match on the given regex and the host
+func regexMatch(matcher Matcher, host string) bool {
+	re := regexp.MustCompile(matcher.Value)
+
+	if len(re.FindStringIndex(host)) > 0 {
+		return true
+	}
+	return false
 }

@@ -57,7 +57,7 @@ type Server struct {
 	SkipAuthRoutes   []string
 	WhitelistDomains []string
 
-	Cors CorsOptions
+	Cors Cors
 
 	ExtraJwtIssuers       []string
 	SSLInsecureSkipVerify bool
@@ -83,12 +83,6 @@ type CookieOptions struct {
 	SameSite       string        `flag:"cookie-samesite" cfg:"cookie_samesite"`
 	CSRFPerRequest bool          `flag:"cookie-csrf-per-request" cfg:"cookie_csrf_per_request"`
 	CSRFExpire     time.Duration `flag:"cookie-csrf-expire" cfg:"cookie_csrf_expire"`
-}
-
-type CorsOptions struct {
-	Credentials    bool
-	AllowedHeaders []string
-	AllowedOrigins []string
 }
 
 // TLS contains the information for loading a TLS certificate and key
@@ -158,9 +152,7 @@ func ServerDefaults() Server {
 			CSRFPerRequest: false,
 			CSRFExpire:     time.Duration(15) * time.Minute,
 		},
-		Cors: CorsOptions{
-			Credentials: false,
-		},
+		Cors: corsDefault(),
 	}
 
 	return server
