@@ -12,12 +12,37 @@ import (
 	"strings"
 
 	middlewareapi "github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/middleware"
+	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/options"
+	"github.com/oauth2-proxy/oauth2-proxy/v7/providers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("SignIn Page", func() {
+	var provider providers.Provider
+	providerData := options.Provider{
+		ID:           "google=oauth2-proxy",
+		Name:         "My Provider",
+		Type:         "google",
+		ClientSecret: "b2F1dGgyLXByb3h5LWNsaWVudC1zZWNyZXQK",
+		ClientID:     "oauth2-proxy",
+		AzureConfig: options.AzureOptions{
+			Tenant: "common",
+		},
+		OIDCConfig: options.OIDCOptions{
+			GroupsClaim:       "groups",
+			EmailClaim:        "email",
+			UserIDClaim:       "email",
+			AudienceClaims:    []string{"aud"},
+			ExtraAudiences:    []string{},
+			InsecureSkipNonce: true,
+		},
+		LoginURLParameters: []options.LoginURLParameter{
+			{Name: "approval_prompt", Default: []string{"force"}},
+		},
+	}
+	provider, _ = providers.NewProvider(providerData)
 
 	Context("SignIn Page Writer", func() {
 		var request *http.Request
@@ -37,7 +62,6 @@ var _ = Describe("SignIn Page", func() {
 				template:         tmpl,
 				errorPageWriter:  errorPage,
 				proxyPrefix:      "/prefix/",
-				providerName:     "My Provider",
 				signInMessage:    "Sign In Here",
 				footer:           "Custom Footer Text",
 				version:          "v0.0.0-test",
@@ -54,11 +78,11 @@ var _ = Describe("SignIn Page", func() {
 		Context("WriteSignInPage", func() {
 			It("Writes the template to the response writer", func() {
 				recorder := httptest.NewRecorder()
-				signInPage.WriteSignInPage(recorder, request, "/redirect", http.StatusOK)
+				signInPage.WriteSignInPage(recorder, request, "/redirect", http.StatusOK, provider)
 
 				body, err := ioutil.ReadAll(recorder.Result().Body)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(string(body)).To(Equal("/prefix/ My Provider Sign In Here Custom Footer Text v0.0.0-test /redirect true Logo Data"))
+				Expect(string(body)).To(Equal("/prefix/ Google Sign In Here Custom Footer Text v0.0.0-test /redirect true Logo Data"))
 			})
 
 			It("Writes an error if the template can't be rendered", func() {
@@ -68,7 +92,7 @@ var _ = Describe("SignIn Page", func() {
 				signInPage.template = tmpl
 
 				recorder := httptest.NewRecorder()
-				signInPage.WriteSignInPage(recorder, request, "/redirect", http.StatusOK)
+				signInPage.WriteSignInPage(recorder, request, "/redirect", http.StatusOK, provider)
 
 				body, err := ioutil.ReadAll(recorder.Result().Body)
 				Expect(err).ToNot(HaveOccurred())

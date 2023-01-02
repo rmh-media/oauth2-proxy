@@ -39,18 +39,18 @@ func TestValidateCookie(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		cookie     options.Cookie
+		cookie     options.CookieOptions
 		errStrings []string
 	}{
 		{
 			name: "with valid configuration",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   validSecret,
 				Domains:  domains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "",
@@ -59,13 +59,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with no cookie secret",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   "",
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "",
@@ -76,13 +76,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with an invalid cookie secret",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   invalidSecret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "",
@@ -93,13 +93,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with a valid Base64 secret",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   validBase64Secret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "",
@@ -108,13 +108,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with an invalid Base64 secret",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   invalidBase64Secret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "",
@@ -125,13 +125,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with an invalid name",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     invalidName,
 				Secret:   validSecret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "",
@@ -142,13 +142,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with a name that is too long",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     longName,
 				Secret:   validSecret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "",
@@ -159,13 +159,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with refresh longer than expire",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   validSecret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   15 * time.Minute,
-				Refresh:  time.Hour,
+				Expire:   options.Duration(15 * time.Minute),
+				Refresh:  options.Duration(time.Hour),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "",
@@ -176,13 +176,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with samesite \"none\"",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   validSecret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "none",
@@ -191,13 +191,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with samesite \"lax\"",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   validSecret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "none",
@@ -206,13 +206,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with samesite \"strict\"",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   validSecret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "none",
@@ -221,13 +221,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with samesite \"invalid\"",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     validName,
 				Secret:   validSecret,
 				Domains:  emptyDomains,
 				Path:     "",
-				Expire:   time.Hour,
-				Refresh:  15 * time.Minute,
+				Expire:   options.Duration(time.Hour),
+				Refresh:  options.Duration(15 * time.Minute),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "invalid",
@@ -238,13 +238,13 @@ func TestValidateCookie(t *testing.T) {
 		},
 		{
 			name: "with a combination of configuration errors",
-			cookie: options.Cookie{
+			cookie: options.CookieOptions{
 				Name:     invalidName,
 				Secret:   invalidSecret,
 				Domains:  domains,
 				Path:     "",
-				Expire:   15 * time.Minute,
-				Refresh:  time.Hour,
+				Expire:   options.Duration(15 * time.Minute),
+				Refresh:  options.Duration(time.Hour),
 				Secure:   true,
 				HTTPOnly: false,
 				SameSite: "invalid",

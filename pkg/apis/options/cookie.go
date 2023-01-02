@@ -37,20 +37,3 @@ func cookieFlagSet() *pflag.FlagSet {
 	flagSet.Duration("cookie-csrf-expire", time.Duration(15)*time.Minute, "expire timeframe for CSRF cookie")
 	return flagSet
 }
-
-// cookieDefaults creates a Cookie populating each field with its default value
-func cookieDefaults() Cookie {
-	return Cookie{
-		Name:           "_oauth2_proxy",
-		Secret:         "",
-		Domains:        nil,
-		Path:           "/",
-		Expire:         time.Duration(168) * time.Hour,
-		Refresh:        time.Duration(0),
-		Secure:         true,
-		HTTPOnly:       true,
-		SameSite:       "",
-		CSRFPerRequest: false,
-		CSRFExpire:     time.Duration(15) * time.Minute,
-	}
-}

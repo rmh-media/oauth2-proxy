@@ -11,7 +11,7 @@ import (
 var _ = Describe("Legacy Options", func() {
 	Context("ToOptions", func() {
 		It("converts the options as expected", func() {
-			opts := NewOptions()
+			opts := NewAlphaOptions()
 
 			legacyOpts := NewLegacyOptions()
 
@@ -28,7 +28,7 @@ var _ = Describe("Legacy Options", func() {
 
 			truth := true
 			staticCode := 204
-			opts.UpstreamServers = UpstreamConfig{
+			opts.UpstreamConfig = UpstreamConfig{
 				Upstreams: []Upstream{
 					{
 						ID:                    "/baz",

@@ -1,10 +1,11 @@
 package options
 
 import (
-	ipapi "github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/ip"
-	internaloidc "github.com/oauth2-proxy/oauth2-proxy/v7/pkg/providers/oidc"
 	"net/url"
 	"time"
+
+	ipapi "github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/ip"
+	internaloidc "github.com/oauth2-proxy/oauth2-proxy/v7/pkg/providers/oidc"
 )
 
 // Server represents the configuration for an HTTP(S) server
@@ -72,17 +73,17 @@ type Server struct {
 }
 
 type CookieOptions struct {
-	Name           string        `flag:"cookie-name" cfg:"cookie_name"`
-	Secret         string        `json:"secret,omitempty"`
-	Domains        []string      `flag:"cookie-domain" cfg:"cookie_domains"`
-	Path           string        `flag:"cookie-path" cfg:"cookie_path"`
-	Expire         Duration      `json:"expire,omitempty" default:"168m"`
-	Refresh        Duration      `json:"refresh,omitempty"`
-	Secure         bool          `flag:"cookie-secure" cfg:"cookie_secure"`
-	HTTPOnly       bool          `flag:"cookie-httponly" cfg:"cookie_httponly"`
-	SameSite       string        `flag:"cookie-samesite" cfg:"cookie_samesite"`
-	CSRFPerRequest bool          `flag:"cookie-csrf-per-request" cfg:"cookie_csrf_per_request"`
-	CSRFExpire     time.Duration `flag:"cookie-csrf-expire" cfg:"cookie_csrf_expire"`
+	Name           string   `flag:"cookie-name" cfg:"cookie_name"`
+	Secret         string   `json:"secret,omitempty"`
+	Domains        []string `flag:"cookie-domain" cfg:"cookie_domains"`
+	Path           string   `flag:"cookie-path" cfg:"cookie_path"`
+	Expire         Duration `json:"expire,omitempty" default:"168m"`
+	Refresh        Duration `json:"refresh,omitempty"`
+	Secure         bool     `flag:"cookie-secure" cfg:"cookie_secure"`
+	HTTPOnly       bool     `flag:"cookie-httponly" cfg:"cookie_httponly"`
+	SameSite       string   `flag:"cookie-samesite" cfg:"cookie_samesite"`
+	CSRFPerRequest bool     `flag:"cookie-csrf-per-request" cfg:"cookie_csrf_per_request"`
+	CSRFExpire     Duration `flag:"cookie-csrf-expire" cfg:"cookie_csrf_expire"`
 }
 
 // TLS contains the information for loading a TLS certificate and key
@@ -130,6 +131,22 @@ func (o *AlphaOptions) SetJWTBearerVerifiers(s []internaloidc.IDTokenVerifier) {
 func (o *AlphaOptions) SetRealClientIPParser(s ipapi.RealClientIPParser) {
 	o.Server.realClientIPParser = s
 }
+
+func cookieDefaults() CookieOptions {
+	return CookieOptions{
+		Name:           "_oauth2_proxy",
+		Secret:         "",
+		Domains:        nil,
+		Path:           "/",
+		Expire:         Duration(time.Duration(168) * time.Hour),
+		Refresh:        Duration(time.Duration(0)),
+		Secure:         true,
+		HTTPOnly:       true,
+		SameSite:       "",
+		CSRFPerRequest: false,
+		CSRFExpire:     Duration(time.Duration(15) * time.Minute),
+	}
+}
 func ServerDefaults() Server {
 	server := Server{
 		ProxyPrefix:        "/oauth2",
@@ -139,20 +156,8 @@ func ServerDefaults() Server {
 		Logging:   loggingDefaults(),
 		Session:   sessionOptionsDefaults(),
 		Templates: templatesDefaults(),
-		Cookie: CookieOptions{
-			Name:           "_oauth2_proxy",
-			Secret:         "",
-			Domains:        nil,
-			Path:           "/",
-			Expire:         Duration(time.Duration(168) * time.Hour),
-			Refresh:        Duration(time.Duration(0)),
-			Secure:         true,
-			HTTPOnly:       true,
-			SameSite:       "",
-			CSRFPerRequest: false,
-			CSRFExpire:     time.Duration(15) * time.Minute,
-		},
-		Cors: corsDefault(),
+		Cookie:    cookieDefaults(),
+		Cors:      corsDefault(),
 	}
 
 	return server

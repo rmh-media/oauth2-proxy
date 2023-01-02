@@ -9,12 +9,37 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/options"
+	"github.com/oauth2-proxy/oauth2-proxy/v7/providers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Writer", func() {
+	var provider providers.Provider
+	providerData := options.Provider{
+		ID:           "google=oauth2-proxy",
+		Type:         "google",
+		ClientSecret: "b2F1dGgyLXByb3h5LWNsaWVudC1zZWNyZXQK",
+		ClientID:     "oauth2-proxy",
+		AzureConfig: options.AzureOptions{
+			Tenant: "common",
+		},
+		OIDCConfig: options.OIDCOptions{
+			GroupsClaim:       "groups",
+			EmailClaim:        "email",
+			UserIDClaim:       "email",
+			AudienceClaims:    []string{"aud"},
+			ExtraAudiences:    []string{},
+			InsecureSkipNonce: true,
+		},
+		LoginURLParameters: []options.LoginURLParameter{
+			{Name: "approval_prompt", Default: []string{"force"}},
+		},
+	}
+	provider, _ = providers.NewProvider(providerData)
+
 	Context("NewWriter", func() {
 		var writer Writer
 		var opts Opts
@@ -57,7 +82,7 @@ var _ = Describe("Writer", func() {
 
 			It("Writes the default sign in template", func() {
 				recorder := httptest.NewRecorder()
-				writer.WriteSignInPage(recorder, request, "/redirect", http.StatusOK)
+				writer.WriteSignInPage(recorder, request, "/redirect", http.StatusOK, provider)
 
 				body, err := ioutil.ReadAll(recorder.Result().Body)
 				Expect(err).ToNot(HaveOccurred())
@@ -104,7 +129,7 @@ var _ = Describe("Writer", func() {
 
 			It("Writes the custom sign in template", func() {
 				recorder := httptest.NewRecorder()
-				writer.WriteSignInPage(recorder, request, "/redirect", http.StatusOK)
+				writer.WriteSignInPage(recorder, request, "/redirect", http.StatusOK, provider)
 
 				body, err := ioutil.ReadAll(recorder.Result().Body)
 				Expect(err).ToNot(HaveOccurred())
@@ -151,7 +176,7 @@ var _ = Describe("Writer", func() {
 				rw := httptest.NewRecorder()
 				req := httptest.NewRequest("", "/sign-in", nil)
 				redirectURL := "<redirectURL>"
-				in.writer.WriteSignInPage(rw, req, redirectURL, http.StatusOK)
+				in.writer.WriteSignInPage(rw, req, redirectURL, http.StatusOK, provider)
 
 				Expect(rw.Result().StatusCode).To(Equal(in.expectedStatus))
 
@@ -166,7 +191,7 @@ var _ = Describe("Writer", func() {
 			}),
 			Entry("With an override function", writerFuncsTableInput{
 				writer: &WriterFuncs{
-					SignInPageFunc: func(rw http.ResponseWriter, req *http.Request, redirectURL string, statusCode int) {
+					SignInPageFunc: func(rw http.ResponseWriter, req *http.Request, redirectURL string, statusCode int, provider providers.Provider) {
 						rw.WriteHeader(202)
 						rw.Write([]byte(fmt.Sprintf("%s %s", req.URL.Path, redirectURL)))
 					},

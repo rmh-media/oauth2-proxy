@@ -12,7 +12,7 @@ type AlphaOptions struct {
 	// UpstreamConfig is used to configure upstream servers.
 	// Once a user is authenticated, requests to the server will be proxied to
 	// these upstream servers based on the path mappings defined in this list.
-	UpstreamConfig UpstreamConfig `json:"upstreamConfig,omitempty"`
+	UpstreamConfig UpstreamConfig `json:"upstreamConfig,omitempty,squash"`
 
 	// InjectRequestHeaders is used to configure headers that should be added
 	// to requests to upstream servers.

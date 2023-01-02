@@ -138,7 +138,7 @@ func (c *csrf) SetCookie(rw http.ResponseWriter, req *http.Request) (*http.Cooki
 		c.cookieName(),
 		encoded,
 		c.cookieOpts,
-		c.cookieOpts.CSRFExpire,
+		c.cookieOpts.CSRFExpire.Duration(),
 		c.time.Now(),
 	)
 	http.SetCookie(rw, cookie)

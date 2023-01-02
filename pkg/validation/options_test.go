@@ -20,18 +20,18 @@ const (
 	providerID   = "providerID"
 )
 
-func testOptions() *options.Options {
-	o := options.NewOptions()
-	o.UpstreamServers.Upstreams = append(o.UpstreamServers.Upstreams, options.Upstream{
+func testOptions() *options.AlphaOptions {
+	o := options.NewAlphaOptions()
+	o.UpstreamConfig.Upstreams = append(o.UpstreamConfig.Upstreams, options.Upstream{
 		ID:   "upstream",
 		Path: "/",
 		URI:  "http://127.0.0.1:8080/",
 	})
-	o.Cookie.Secret = cookieSecret
+	o.Server.Cookie.Secret = cookieSecret
 	o.Providers[0].ID = providerID
 	o.Providers[0].ClientID = clientID
 	o.Providers[0].ClientSecret = clientSecret
-	o.EmailDomains = []string{"*"}
+	o.Server.EmailDomains = []string{"*"}
 	return o
 }
 
@@ -43,8 +43,8 @@ func errorMsg(msgs []string) string {
 }
 
 func TestNewOptions(t *testing.T) {
-	o := options.NewOptions()
-	o.EmailDomains = []string{"*"}
+	o := options.NewAlphaOptions()
+	o.Server.EmailDomains = []string{"*"}
 	err := Validate(o)
 	assert.NotEqual(t, nil, err)
 
@@ -91,7 +91,7 @@ func TestInitializedOptions(t *testing.T) {
 // seems to parse damn near anything.
 func TestRedirectURL(t *testing.T) {
 	o := testOptions()
-	o.RawRedirectURL = "https://myhost.com/oauth2/callback"
+	o.Server.RawRedirectURL = "https://myhost.com/oauth2/callback"
 	assert.Equal(t, nil, Validate(o))
 	expected := &url.URL{
 		Scheme: "https", Host: "myhost.com", Path: "/oauth2/callback"}
@@ -102,11 +102,12 @@ func TestCookieRefreshMustBeLessThanCookieExpire(t *testing.T) {
 	o := testOptions()
 	assert.Equal(t, nil, Validate(o))
 
-	o.Cookie.Secret = "0123456789abcdef"
-	o.Cookie.Refresh = o.Cookie.Expire
+	o.Server.Cookie.Secret = "0123456789abcdef"
+	o.Server.Cookie.Refresh = o.Server.Cookie.Expire
 	assert.NotEqual(t, nil, Validate(o))
 
-	o.Cookie.Refresh -= time.Duration(1)
+	refreshDuration := o.Server.Cookie.Refresh.Duration()
+	o.Server.Cookie.Refresh = options.Duration(refreshDuration - time.Duration(1))
 	assert.Equal(t, nil, Validate(o))
 }
 
@@ -115,29 +116,29 @@ func TestBase64CookieSecret(t *testing.T) {
 	assert.Equal(t, nil, Validate(o))
 
 	// 32 byte, base64 (urlsafe) encoded key
-	o.Cookie.Secret = "yHBw2lh2Cvo6aI_jn_qMTr-pRAjtq0nzVgDJNb36jgQ="
+	o.Server.Cookie.Secret = "yHBw2lh2Cvo6aI_jn_qMTr-pRAjtq0nzVgDJNb36jgQ="
 	assert.Equal(t, nil, Validate(o))
 
 	// 32 byte, base64 (urlsafe) encoded key, w/o padding
-	o.Cookie.Secret = "yHBw2lh2Cvo6aI_jn_qMTr-pRAjtq0nzVgDJNb36jgQ"
+	o.Server.Cookie.Secret = "yHBw2lh2Cvo6aI_jn_qMTr-pRAjtq0nzVgDJNb36jgQ"
 	assert.Equal(t, nil, Validate(o))
 
 	// 24 byte, base64 (urlsafe) encoded key
-	o.Cookie.Secret = "Kp33Gj-GQmYtz4zZUyUDdqQKx5_Hgkv3"
+	o.Server.Cookie.Secret = "Kp33Gj-GQmYtz4zZUyUDdqQKx5_Hgkv3"
 	assert.Equal(t, nil, Validate(o))
 
 	// 16 byte, base64 (urlsafe) encoded key
-	o.Cookie.Secret = "LFEqZYvYUwKwzn0tEuTpLA=="
+	o.Server.Cookie.Secret = "LFEqZYvYUwKwzn0tEuTpLA=="
 	assert.Equal(t, nil, Validate(o))
 
 	// 16 byte, base64 (urlsafe) encoded key, w/o padding
-	o.Cookie.Secret = "LFEqZYvYUwKwzn0tEuTpLA"
+	o.Server.Cookie.Secret = "LFEqZYvYUwKwzn0tEuTpLA"
 	assert.Equal(t, nil, Validate(o))
 }
 
 func TestValidateSignatureKey(t *testing.T) {
 	o := testOptions()
-	o.SignatureKey = "sha1:secret"
+	o.Server.SignatureKey = "sha1:secret"
 	assert.Equal(t, nil, Validate(o))
 	assert.Equal(t, o.GetSignatureData().Hash, crypto.SHA1)
 	assert.Equal(t, o.GetSignatureData().Key, "secret")
@@ -145,44 +146,44 @@ func TestValidateSignatureKey(t *testing.T) {
 
 func TestValidateSignatureKeyInvalidSpec(t *testing.T) {
 	o := testOptions()
-	o.SignatureKey = "invalid spec"
+	o.Server.SignatureKey = "invalid spec"
 	err := Validate(o)
 	assert.Equal(t, err.Error(), "invalid configuration:\n"+
-		"  invalid signature hash:key spec: "+o.SignatureKey)
+		"  invalid signature hash:key spec: "+o.Server.SignatureKey)
 }
 
 func TestValidateSignatureKeyUnsupportedAlgorithm(t *testing.T) {
 	o := testOptions()
-	o.SignatureKey = "unsupported:default secret"
+	o.Server.SignatureKey = "unsupported:default secret"
 	err := Validate(o)
 	assert.Equal(t, err.Error(), "invalid configuration:\n"+
-		"  unsupported signature hash algorithm: "+o.SignatureKey)
+		"  unsupported signature hash algorithm: "+o.Server.SignatureKey)
 }
 
 func TestGCPHealthcheck(t *testing.T) {
 	o := testOptions()
-	o.GCPHealthChecks = true
+	o.Server.GCPHealthChecks = true
 	assert.Equal(t, nil, Validate(o))
 }
 
 func TestRealClientIPHeader(t *testing.T) {
 	// Ensure nil if ReverseProxy not set.
 	o := testOptions()
-	o.RealClientIPHeader = "X-Real-IP"
+	o.Server.RealClientIPHeader = "X-Real-IP"
 	assert.Equal(t, nil, Validate(o))
 	assert.Nil(t, o.GetRealClientIPParser())
 
 	// Ensure simple use case works.
 	o = testOptions()
-	o.ReverseProxy = true
-	o.RealClientIPHeader = "X-Forwarded-For"
+	o.Server.ReverseProxy = true
+	o.Server.RealClientIPHeader = "X-Forwarded-For"
 	assert.Equal(t, nil, Validate(o))
 	assert.NotNil(t, o.GetRealClientIPParser())
 
 	// Ensure unknown header format process an error.
 	o = testOptions()
-	o.ReverseProxy = true
-	o.RealClientIPHeader = "Forwarded"
+	o.Server.ReverseProxy = true
+	o.Server.RealClientIPHeader = "Forwarded"
 	err := Validate(o)
 	assert.NotEqual(t, nil, err)
 	expected := errorMsg([]string{
@@ -193,8 +194,8 @@ func TestRealClientIPHeader(t *testing.T) {
 
 	// Ensure invalid header format produces an error.
 	o = testOptions()
-	o.ReverseProxy = true
-	o.RealClientIPHeader = "!934invalidheader-23:"
+	o.Server.ReverseProxy = true
+	o.Server.RealClientIPHeader = "!934invalidheader-23:"
 	err = Validate(o)
 	assert.NotEqual(t, nil, err)
 	expected = errorMsg([]string{

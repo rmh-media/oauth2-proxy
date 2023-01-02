@@ -39,8 +39,14 @@ injectResponseHeaders:
     prefix: "Basic "
     basicAuthPassword:
       value: c3VwZXItc2VjcmV0LXBhc3N3b3Jk
-server:
+server: 
   bindAddress: "127.0.0.1:4180"
+  redirectUrl: "http://localhost:4180/oauth2/callback"
+  cookie:
+    secret: "OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w="
+    secure: false
+  emailDomains:
+    - "example.com"
 providers:
 - provider: google
   ID: google=oauth2-proxy
@@ -71,9 +77,9 @@ providers:
 	}
 
 	testExpectedOptions := func() *options.AlphaOptions {
-		opts, err := options.NewLegacyOptions().ToOptions()
-		Expect(err).ToNot(HaveOccurred())
+		opts := options.NewAlphaOptions()
 
+		opts.Server.BindAddress = "127.0.0.1:4180"
 		opts.Server.Cookie.Secret = "OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w="
 		opts.Server.EmailDomains = []string{"example.com"}
 		opts.Server.Cookie.Secure = false
