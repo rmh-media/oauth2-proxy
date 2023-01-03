@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/ghodss/yaml"
 	"math/rand"
 	"os"
 	"runtime"
 	"time"
+
+	"github.com/ghodss/yaml"
 
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/options"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/logger"
@@ -38,17 +39,17 @@ func main() {
 	}
 
 	if *convertConfig != "" {
-		//logger.Printf("%v is old config", convertConfig)
+		logger.Printf("%v is old config", convertConfig)
 		//
-		//oldOptions, err := loadLegacyOptions(*convertConfig, configFlagSet, os.Args[1:])
-		//if err != nil {
-		//	logger.Fatalf("ERROR: %v", err)
-		//}
+		oldOptions, err := loadLegacyOptions(*convertConfig, configFlagSet, os.Args[1:])
+		if err != nil {
+			logger.Fatalf("ERROR: %v", err)
+		}
 		//
-		//if err := printConvertedConfig(oldOptions); err != nil {
-		//	logger.Fatalf("ERROR: could not convert config: %v", err)
-		//}
-		//return
+		if err := printConvertedConfig(oldOptions); err != nil {
+			logger.Fatalf("ERROR: could not convert config: %v", err)
+		}
+		return
 	}
 
 	opts, err := loadConfiguration(*config)
@@ -85,7 +86,7 @@ func loadConfiguration(config string) (*options.AlphaOptions, error) {
 
 // loadLegacyOptions loads the old toml options using the legacy flagset
 // and legacy options struct.
-func loadLegacyOptions(config string, extraFlags *pflag.FlagSet, args []string) (*options.AlphaOptions, error) {
+func loadLegacyOptions(config string, extraFlags *pflag.FlagSet, args []string) (*options.Options, error) {
 	optionsFlagSet := options.NewLegacyFlagSet()
 	optionsFlagSet.AddFlagSet(extraFlags)
 	if err := optionsFlagSet.Parse(args); err != nil {

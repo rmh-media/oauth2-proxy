@@ -54,8 +54,46 @@ func (a *AlphaOptions) ExtractFrom(opts *Options) {
 	a.InjectRequestHeaders = opts.InjectRequestHeaders
 	a.InjectResponseHeaders = opts.InjectResponseHeaders
 	a.Server = opts.Server
+	a.Server.Cookie = opts.Cookie.ToNewFormat()
 	a.MetricsServer = opts.MetricsServer
 	a.Providers = opts.Providers
+	a.extractServerAttributesFrom(opts)
+}
+
+// extractServerAttributesFrom moves all the attributes from the old options to the new place under the Server struct
+func (a *AlphaOptions) extractServerAttributesFrom(opts *Options) {
+	a.Server.ProxyPrefix = opts.ProxyPrefix
+	a.Server.PingPath = opts.PingPath
+	a.Server.PingUserAgent = opts.PingUserAgent
+	a.Server.ReverseProxy = opts.ReverseProxy
+	a.Server.RealClientIPHeader = opts.RealClientIPHeader
+	a.Server.TrustedIPs = opts.TrustedIPs
+	a.Server.ForceHTTPS = opts.ForceHTTPS
+	a.Server.RawRedirectURL = opts.RawRedirectURL
+	a.Server.AuthenticatedEmailsFile = opts.AuthenticatedEmailsFile
+	a.Server.EmailDomains = opts.EmailDomains
+	a.Server.WhitelistDomains = opts.WhitelistDomains
+	a.Server.HtpasswdFile = opts.HtpasswdFile
+	a.Server.HtpasswdUserGroups = opts.HtpasswdUserGroups
+
+	a.Server.APIRoutes = opts.APIRoutes
+	a.Server.SkipAuthRegex = opts.SkipAuthRegex
+	a.Server.SkipAuthRoutes = opts.SkipAuthRoutes
+	a.Server.SkipJwtBearerTokens = opts.SkipJwtBearerTokens
+	a.Server.ExtraJwtIssuers = opts.ExtraJwtIssuers
+	a.Server.SkipProviderButton = opts.SkipProviderButton
+	a.Server.SSLInsecureSkipVerify = opts.SSLInsecureSkipVerify
+	a.Server.SkipAuthPreflight = opts.SkipAuthPreflight
+	a.Server.ForceJSONErrors = opts.ForceJSONErrors
+	a.Server.SignatureKey = opts.SignatureKey
+	a.Server.GCPHealthChecks = opts.GCPHealthChecks
+	a.Server.LegacyPreferEmailToUser = opts.LegacyPreferEmailToUser
+	a.Server.redirectURL = opts.redirectURL
+	a.Server.signatureData = opts.signatureData
+	a.Server.oidcVerifier = opts.oidcVerifier
+	a.Server.realClientIPParser = opts.realClientIPParser
+	a.Server.jwtBearerVerifiers = opts.jwtBearerVerifiers
+
 }
 
 func NewAlphaOptions() *AlphaOptions {

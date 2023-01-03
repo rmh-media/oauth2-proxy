@@ -24,7 +24,7 @@ type LegacyOptions struct {
 	// Legacy options for single provider
 	LegacyProvider LegacyProvider `cfg:",squash"`
 
-	Options AlphaOptions `cfg:",squash"`
+	Options Options `cfg:",squash"`
 }
 
 func NewLegacyOptions() *LegacyOptions {
@@ -59,7 +59,7 @@ func NewLegacyOptions() *LegacyOptions {
 			InsecureOIDCSkipNonce: true,
 		},
 
-		Options: *NewAlphaOptions(),
+		Options: *NewOptions(),
 	}
 }
 
@@ -74,12 +74,12 @@ func NewLegacyFlagSet() *pflag.FlagSet {
 	return flagSet
 }
 
-func (l *LegacyOptions) ToOptions() (*AlphaOptions, error) {
+func (l *LegacyOptions) ToOptions() (*Options, error) {
 	upstreams, err := l.LegacyUpstreams.convert()
 	if err != nil {
 		return nil, fmt.Errorf("error converting upstreams: %v", err)
 	}
-	l.Options.UpstreamConfig = upstreams
+	l.Options.UpstreamServers = upstreams
 
 	l.Options.InjectRequestHeaders, l.Options.InjectResponseHeaders = l.LegacyHeaders.convert()
 
@@ -94,6 +94,26 @@ func (l *LegacyOptions) ToOptions() (*AlphaOptions, error) {
 	l.Options.Providers = providers
 
 	return &l.Options, nil
+}
+
+func (l *LegacyOptions) ToAlphaOptions() *AlphaOptions {
+	alphaOptions := NewAlphaOptions()
+
+	alphaOptions.UpstreamConfig = l.Options.UpstreamServers
+
+	alphaOptions.InjectRequestHeaders, alphaOptions.InjectResponseHeaders = l.LegacyHeaders.convert()
+
+	alphaOptions.Server, alphaOptions.MetricsServer = l.LegacyServer.convert()
+
+	// l.Options.Server.LegacyPreferEmailToUser = l.LegacyHeaders.PreferEmailToUser
+
+	// providers, err := l.LegacyProvider.convert()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error converting provider: %v", err)
+	// }
+	// l.Options.Providers = providers
+
+	return alphaOptions
 }
 
 type LegacyUpstreams struct {

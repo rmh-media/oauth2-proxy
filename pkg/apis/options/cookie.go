@@ -7,6 +7,7 @@ import (
 )
 
 // Cookie contains configuration options relating to Cookie configuration
+// Deprecated: This struct is only used for legacy config convertion. Please see server.go/CookieOptions for the new struct. Reason is the time.Duration needs to be replaced by the Duration for yaml format usage.
 type Cookie struct {
 	Name           string        `flag:"cookie-name" cfg:"cookie_name"`
 	Secret         string        `flag:"cookie-secret" cfg:"cookie_secret"`
@@ -36,4 +37,20 @@ func cookieFlagSet() *pflag.FlagSet {
 	flagSet.Bool("cookie-csrf-per-request", false, "When this property is set to true, then the CSRF cookie name is built based on the state and varies per request. If property is set to false, then CSRF cookie has the same name for all requests.")
 	flagSet.Duration("cookie-csrf-expire", time.Duration(15)*time.Minute, "expire timeframe for CSRF cookie")
 	return flagSet
+}
+
+func (c Cookie) ToNewFormat() CookieOptions {
+	return CookieOptions{
+		Name:           c.Name,
+		Secret:         c.Secret,
+		Domains:        c.Domains,
+		Path:           c.Path,
+		Expire:         Duration(c.Expire),
+		Refresh:        Duration(c.Refresh),
+		Secure:         c.Secure,
+		HTTPOnly:       c.HTTPOnly,
+		SameSite:       c.SameSite,
+		CSRFPerRequest: c.CSRFPerRequest,
+		CSRFExpire:     Duration(c.CSRFExpire),
+	}
 }
