@@ -47,6 +47,7 @@ type Server struct {
 	SkipProviderButton  bool
 	SkipJwtBearerTokens bool
 	SkipAuthRegex       []string
+	SkipBasicAuthUsers  []string
 
 	SignatureKey    string
 	GCPHealthChecks bool

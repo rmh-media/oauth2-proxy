@@ -592,7 +592,31 @@ func (p *OAuthProxy) ErrorPage(rw http.ResponseWriter, req *http.Request, code i
 // IsAllowedRequest is used to check if auth should be skipped for this request
 func (p *OAuthProxy) IsAllowedRequest(req *http.Request) bool {
 	isPreflightRequestAllowed := p.skipAuthPreflight && req.Method == "OPTIONS"
-	return isPreflightRequestAllowed || p.isAllowedRoute(req) || p.isTrustedIP(req)
+	return isPreflightRequestAllowed || p.isAllowedRoute(req) || p.isTrustedIP(req) || p.isSkippingBasicAuthUsers(req)
+}
+
+// We check if there is a basic auth header and if so check if the user
+// is inside the defined SkipBasicAuthUsers
+func (p *OAuthProxy) isSkippingBasicAuthUsers(req *http.Request) bool {
+
+	auth := req.Header.Get("Authorization")
+
+	if auth == "" {
+		return false
+	}
+
+	user, _, err := middleware.FindBasicCredentialsFromHeader(auth)
+
+	if err != nil {
+		return false
+	}
+
+	for _, u := range p.opts.Server.SkipBasicAuthUsers {
+		if user == u {
+			return true
+		}
+	}
+	return false
 }
 
 func isAllowedMethod(req *http.Request, route allowedRoute) bool {

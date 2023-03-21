@@ -1,0 +1,75 @@
+server:
+  bindAddress: 0.0.0.0:4180
+  emailDomains:
+    - "*"
+  cookie:
+    secure: false
+    secret: "OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w="
+    refresh: 55m
+  skipProviderButton: true
+  redirectUrl: "/oauth2/callback"
+  skipAuthPreflight: true
+  defaultProvider: demo_client
+  skipJwtBearerTokens: true
+  skipAuthRoutes:
+    - "^/sso/renew/token"
+  apiRoutes:
+    - "^/api"
+  cors:
+    credentials: true
+    allowedHeaders:
+      - "*"
+    allowedOrigins:
+      - "(.*\\.)?showcase\\.test?:.*"
+  whitelistDomains:
+    - "*.showcase.test:*"
+injectRequestHeaders:
+  - name: X-Forwarded-Groups
+    values:
+      - claim: groups
+  - name: X-Forwarded-User
+    values:
+      -   claim: user
+  - name: X-Forwarded-Email
+    values:
+      - claim: email
+  - name: X-Forwarded-Preferred-Username
+    values:
+      - claim: preferred_username
+  - name: X-Forwarded-Access-Token
+    values:
+      - claim: access_token
+upstreamConfig:
+  upstreams:
+    - flushInterval: 1s
+      id: api
+      passHostHeader: true
+      proxyWebSockets: true
+      timeout: 30s
+      uri: http://api_proxy
+      path: /
+
+providers:
+  - provider: oidc
+    name: "Demo Client"
+    clientSecret: M4RRvA-oJyopMiC7cfZYIXkXKd0kwtqi8bnd6_jipps
+    clientID: aa9b4b3b-18ff-4f7f-8271-465df8e3a169
+    id: demo_client
+    oidcConfig:
+      audienceClaims:
+        - aud
+      emailClaim: email
+      groupsClaim: groups
+      insecureSkipNonce: true
+      issuerURL: https://auth.develop.innoverse.cloud
+      userIDClaim: email
+    scope: openid
+
+matching:
+  - provider: demo_client
+    matchers:
+      - type: Domain
+        value: demo.api.showcase.test:4180
+      - type: Regex
+        value: '(?:http[s]*\\:\\/\\/)demo((-)[a-z0-9_-]+)?\\..?([\\s\\S]*)\\.showcase\\.test([\\s\\S]*)$'
+
