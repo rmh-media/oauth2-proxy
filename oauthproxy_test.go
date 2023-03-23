@@ -2534,6 +2534,82 @@ func TestApiRoutes(t *testing.T) {
 		})
 	}
 }
+func TestAllowedBasicAuthUsers(t *testing.T) {
+	upstreamServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		_, err := w.Write([]byte("Allowed Request"))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}))
+	t.Cleanup(upstreamServer.Close)
+
+	opts := baseTestOptions()
+	opts.UpstreamConfig = options.UpstreamConfig{
+		Upstreams: []options.Upstream{
+			{
+				ID:   upstreamServer.URL,
+				Path: "/",
+				URI:  upstreamServer.URL,
+			},
+		},
+	}
+	opts.Server.SkipBasicAuthUsers = []string{
+		"TEST_USER",
+	}
+	opts.Server.SkipAuthPreflight = true
+	opts.Server.SkipProviderButton = true
+
+	err := validation.Validate(opts)
+	assert.NoError(t, err)
+	proxy, err := NewOAuthProxy(opts, func(_ string) bool { return true })
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		name    string
+		method  string
+		user    string
+		allowed bool
+	}{
+		{
+			name:    "Allowed Basic User GET call",
+			method:  "GET",
+			user:    "TEST_USER",
+			allowed: true,
+		},
+		{
+			name:    "Allowed Basic User POST call",
+			method:  "POST",
+			user:    "TEST_USER",
+			allowed: true,
+		},
+		{
+			name:    "Denied Basic User POST call",
+			method:  "GET",
+			user:    "OTHER_USER",
+			allowed: false,
+		},
+		{
+			name:    "Denied Basic User GET call",
+			method:  "GET",
+			user:    "OTHER_USER",
+			allowed: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			auth := base64.StdEncoding.EncodeToString([]byte(tc.user + ":password"))
+
+			req, err := http.NewRequest(tc.method, "/", nil)
+			req.Header.Add("Authorization", "Basic "+auth)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.allowed, proxy.isSkippingBasicAuthUsers(req))
+		})
+	}
+}
 
 func TestAllowedRequest(t *testing.T) {
 	upstreamServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

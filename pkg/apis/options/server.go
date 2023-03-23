@@ -154,6 +154,8 @@ func ServerDefaults() Server {
 		RealClientIPHeader: "X-Real-IP",
 		PingPath:           "/ping",
 
+		SkipBasicAuthUsers: nil,
+
 		Logging:   loggingDefaults(),
 		Session:   sessionOptionsDefaults(),
 		Templates: templatesDefaults(),
