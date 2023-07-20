@@ -310,6 +310,7 @@ func (p *OAuthProxy) setupServer(opts *options.AlphaOptions) error {
 // sessionChain before going on with the request.
 func (p *OAuthProxy) changeProvider(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), "providers", p.providers)
 		for i := range p.matching {
 			matchers := p.matching[i].Matchers
 			matched := false
@@ -326,11 +327,12 @@ func (p *OAuthProxy) changeProvider(next http.Handler) http.Handler {
 				loadedProvider := p.providers[p.matching[i].Provider]
 
 				p.provider = loadedProvider
-				p.sessionChain = buildSessionChain(p.opts, loadedProvider, p.sessionStore, p.basicAuthValidator)
+
+				ctx = context.WithValue(ctx, "provider", loadedProvider)
+
+				next.ServeHTTP(w, r.WithContext(ctx))
 			}
 		}
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
-		next.ServeHTTP(w, r)
 	})
 }
 
@@ -418,7 +420,13 @@ func buildSessionChain(opts *options.AlphaOptions, provider providers.Provider, 
 
 	if opts.Server.SkipJwtBearerTokens {
 		sessionLoaders := []middlewareapi.TokenToSessionFunc{
-			provider.CreateSessionFromToken,
+			func(ctx context.Context, token string) (*sessionsapi.SessionState, error) {
+				provider := ctx.Value("provider").(providers.Provider)
+				if provider == nil {
+					return nil, fmt.Errorf("provider not found")
+				}
+				return provider.CreateSessionFromToken(ctx, token)
+			},
 		}
 
 		for _, verifier := range opts.GetJWTBearerVerifiers() {
@@ -885,6 +893,16 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 	csrf, err := cookies.LoadCSRFCookie(req, p.CookieOptions)
 	if err != nil {
 		logger.Println(req, logger.AuthFailure, "Invalid authentication via OAuth2: unable to obtain CSRF cookie")
+
+		// if we are configured to redirect to the app on missing csrf cookie
+		if p.CookieOptions.CSRFRedirectIfMissing {
+			// we redirect to the page in the state if csrf cookie is missing
+			_, appRedirect, _ := decodeState(req)
+			http.Redirect(rw, req, appRedirect, http.StatusFound)
+			return
+		}
+
+		// otherwise we show an error page
 		p.ErrorPage(rw, req, http.StatusForbidden, err.Error(), "Login Failed: Unable to find a valid CSRF token. Please try again.")
 		return
 	}
