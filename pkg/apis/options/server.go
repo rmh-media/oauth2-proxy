@@ -48,6 +48,7 @@ type Server struct {
 	SkipJwtBearerTokens bool
 	SkipAuthRegex       []string
 	SkipBasicAuthUsers  []string
+	RedirectOnError     bool
 
 	SignatureKey    string
 	GCPHealthChecks bool
@@ -74,18 +75,17 @@ type Server struct {
 }
 
 type CookieOptions struct {
-	Name                  string   `flag:"cookie-name" cfg:"cookie_name"`
-	Secret                string   `json:"secret,omitempty"`
-	Domains               []string `flag:"cookie-domain" cfg:"cookie_domains"`
-	Path                  string   `flag:"cookie-path" cfg:"cookie_path"`
-	Expire                Duration `json:"expire,omitempty" default:"168m"`
-	Refresh               Duration `json:"refresh,omitempty"`
-	Secure                bool     `flag:"cookie-secure" cfg:"cookie_secure"`
-	HTTPOnly              bool     `flag:"cookie-httponly" cfg:"cookie_httponly"`
-	SameSite              string   `flag:"cookie-samesite" cfg:"cookie_samesite"`
-	CSRFPerRequest        bool     `json:"csrfPerRequest,omitempty"`
-	CSRFExpire            Duration `flag:"cookie-csrf-expire" cfg:"cookie_csrf_expire"`
-	CSRFRedirectIfMissing bool     `json:"csrfRedirectIfMissing,omitempty"`
+	Name           string   `flag:"cookie-name" cfg:"cookie_name"`
+	Secret         string   `json:"secret,omitempty"`
+	Domains        []string `flag:"cookie-domain" cfg:"cookie_domains"`
+	Path           string   `flag:"cookie-path" cfg:"cookie_path"`
+	Expire         Duration `json:"expire,omitempty" default:"168m"`
+	Refresh        Duration `json:"refresh,omitempty"`
+	Secure         bool     `flag:"cookie-secure" cfg:"cookie_secure"`
+	HTTPOnly       bool     `flag:"cookie-httponly" cfg:"cookie_httponly"`
+	SameSite       string   `flag:"cookie-samesite" cfg:"cookie_samesite"`
+	CSRFPerRequest bool     `json:"csrfPerRequest,omitempty"`
+	CSRFExpire     Duration `flag:"cookie-csrf-expire" cfg:"cookie_csrf_expire"`
 }
 
 // TLS contains the information for loading a TLS certificate and key
@@ -136,18 +136,17 @@ func (o *AlphaOptions) SetRealClientIPParser(s ipapi.RealClientIPParser) {
 
 func cookieDefaults() CookieOptions {
 	return CookieOptions{
-		Name:                  "_oauth2_proxy",
-		Secret:                "",
-		Domains:               nil,
-		Path:                  "/",
-		Expire:                Duration(time.Duration(168) * time.Hour),
-		Refresh:               Duration(time.Duration(0)),
-		Secure:                true,
-		HTTPOnly:              true,
-		SameSite:              "",
-		CSRFPerRequest:        false,
-		CSRFExpire:            Duration(time.Duration(15) * time.Minute),
-		CSRFRedirectIfMissing: false,
+		Name:           "_oauth2_proxy",
+		Secret:         "",
+		Domains:        nil,
+		Path:           "/",
+		Expire:         Duration(time.Duration(168) * time.Hour),
+		Refresh:        Duration(time.Duration(0)),
+		Secure:         true,
+		HTTPOnly:       true,
+		SameSite:       "",
+		CSRFPerRequest: false,
+		CSRFExpire:     Duration(time.Duration(15) * time.Minute),
 	}
 }
 func ServerDefaults() Server {
@@ -157,6 +156,7 @@ func ServerDefaults() Server {
 		PingPath:           "/ping",
 
 		SkipBasicAuthUsers: nil,
+		RedirectOnError:    false,
 
 		Logging:   loggingDefaults(),
 		Session:   sessionOptionsDefaults(),

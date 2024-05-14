@@ -579,6 +579,15 @@ func (p *OAuthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // ErrorPage writes an error response
 func (p *OAuthProxy) ErrorPage(rw http.ResponseWriter, req *http.Request, code int, appError string, messages ...interface{}) {
+
+	// If RedirectOnError is set, we redirect to the appRedirectURL instead of showing an error page
+	if p.opts.Server.RedirectOnError {
+		// we redirect to the page in the state if csrf cookie is missing
+		_, appRedirect, _ := decodeState(req)
+		http.Redirect(rw, req, appRedirect, http.StatusFound)
+		return
+	}
+
 	redirectURL, err := p.appDirector.GetRedirect(req)
 	if err != nil {
 		logger.Errorf("Error obtaining redirect: %v", err)
@@ -893,14 +902,6 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 	csrf, err := cookies.LoadCSRFCookie(req, p.CookieOptions)
 	if err != nil {
 		logger.Println(req, logger.AuthFailure, "Invalid authentication via OAuth2: unable to obtain CSRF cookie")
-
-		// if we are configured to redirect to the app on missing csrf cookie
-		if p.CookieOptions.CSRFRedirectIfMissing {
-			// we redirect to the page in the state if csrf cookie is missing
-			_, appRedirect, _ := decodeState(req)
-			http.Redirect(rw, req, appRedirect, http.StatusFound)
-			return
-		}
 
 		// otherwise we show an error page
 		p.ErrorPage(rw, req, http.StatusForbidden, err.Error(), "Login Failed: Unable to find a valid CSRF token. Please try again.")
