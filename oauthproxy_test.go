@@ -197,7 +197,7 @@ func TestBasicAuthPassword(t *testing.T) {
 
 	basicAuthPassword := "This is a secure password"
 	opts := baseTestOptions()
-	opts.UpstreamServers = options.UpstreamConfig{
+	opts.UpstreamConfig = options.UpstreamConfig{
 		Upstreams: []options.Upstream{
 			{
 				ID:   providerServer.URL,
@@ -207,7 +207,7 @@ func TestBasicAuthPassword(t *testing.T) {
 		},
 	}
 
-	opts.Cookie.Secure = false
+	opts.Server.Cookie.Secure = false
 	opts.InjectRequestHeaders = []options.Header{
 		{
 			Name: "Authorization",
@@ -317,7 +317,7 @@ func TestPassGroupsHeadersWithGroups(t *testing.T) {
 type PassAccessTokenTest struct {
 	providerServer *httptest.Server
 	proxy          *OAuthProxy
-	opts           *options.Options
+	opts           *options.AlphaOptions
 }
 
 type PassAccessTokenTestOptions struct {
@@ -349,7 +349,7 @@ func NewPassAccessTokenTest(opts PassAccessTokenTestOptions) (*PassAccessTokenTe
 		}))
 
 	patt.opts = baseTestOptions()
-	patt.opts.UpstreamServers = options.UpstreamConfig{
+	patt.opts.UpstreamConfig = options.UpstreamConfig{
 		Upstreams: []options.Upstream{
 			{
 				ID:   patt.providerServer.URL,
@@ -359,10 +359,10 @@ func NewPassAccessTokenTest(opts PassAccessTokenTestOptions) (*PassAccessTokenTe
 		},
 	}
 	if opts.ProxyUpstream.ID != "" {
-		patt.opts.UpstreamServers.Upstreams = append(patt.opts.UpstreamServers.Upstreams, opts.ProxyUpstream)
+		patt.opts.UpstreamConfig.Upstreams = append(patt.opts.UpstreamConfig.Upstreams, opts.ProxyUpstream)
 	}
 
-	patt.opts.Cookie.Secure = false
+	patt.opts.Server.Cookie.Secure = false
 	if opts.PassAccessToken {
 		patt.opts.InjectRequestHeaders = []options.Header{
 			{
@@ -572,7 +572,7 @@ func TestSessionValidationFailure(t *testing.T) {
 }
 
 type SignInPageTest struct {
-	opts                 *options.Options
+	opts                 *options.AlphaOptions
 	proxy                *OAuthProxy
 	signInRegexp         *regexp.Regexp
 	signInProviderRegexp *regexp.Regexp
@@ -585,7 +585,7 @@ func NewSignInPageTest(skipProvider bool) (*SignInPageTest, error) {
 	var sipTest SignInPageTest
 
 	sipTest.opts = baseTestOptions()
-	sipTest.opts.SkipProviderButton = skipProvider
+	sipTest.opts.Server.SkipProviderButton = skipProvider
 	err := validation.Validate(sipTest.opts)
 	if err != nil {
 		return nil, err
@@ -621,7 +621,7 @@ func TestManualSignInStoresUserGroupsInTheSession(t *testing.T) {
 	userGroups := []string{"somegroup", "someothergroup"}
 
 	opts := baseTestOptions()
-	opts.HtpasswdUserGroups = userGroups
+	opts.Server.HtpasswdUserGroups = userGroups
 	err := validation.Validate(opts)
 	if err != nil {
 		t.Fatal(err)
@@ -797,7 +797,7 @@ func TestSignInPageSkipProviderDirect(t *testing.T) {
 }
 
 type ProcessCookieTest struct {
-	opts         *options.Options
+	opts         *options.AlphaOptions
 	proxy        *OAuthProxy
 	rw           *httptest.ResponseRecorder
 	req          *http.Request
@@ -808,7 +808,7 @@ type ProcessCookieTestOpts struct {
 	providerValidateCookieResponse bool
 }
 
-type OptionsModifier func(*options.Options)
+type OptionsModifier func(*options.AlphaOptions)
 
 func NewProcessCookieTest(opts ProcessCookieTestOpts, modifiers ...OptionsModifier) (*ProcessCookieTest, error) {
 	var pcTest ProcessCookieTest
@@ -819,7 +819,7 @@ func NewProcessCookieTest(opts ProcessCookieTestOpts, modifiers ...OptionsModifi
 	}
 	// First, set the CookieRefresh option so proxy.AesCipher is created,
 	// needed to encrypt the access_token.
-	pcTest.opts.Cookie.Refresh = time.Hour
+	pcTest.opts.Server.Cookie.Refresh = options.Duration(time.Hour)
 	err := validation.Validate(pcTest.opts)
 	if err != nil {
 		return nil, err
@@ -845,7 +845,7 @@ func NewProcessCookieTest(opts ProcessCookieTestOpts, modifiers ...OptionsModifi
 
 	// Now, zero-out proxy.CookieRefresh for the cases that don't involve
 	// access_token validation.
-	pcTest.proxy.CookieOptions.Refresh = time.Duration(0)
+	pcTest.proxy.CookieOptions.Refresh = options.Duration(0)
 	pcTest.rw = httptest.NewRecorder()
 	pcTest.req, _ = http.NewRequest("GET", "/", strings.NewReader(""))
 	pcTest.validateUser = true
@@ -913,8 +913,8 @@ func TestProcessCookieNoCookieError(t *testing.T) {
 }
 
 func TestProcessCookieRefreshNotSet(t *testing.T) {
-	pcTest, err := NewProcessCookieTestWithOptionsModifiers(func(opts *options.Options) {
-		opts.Cookie.Expire = time.Duration(23) * time.Hour
+	pcTest, err := NewProcessCookieTestWithOptionsModifiers(func(opts *options.AlphaOptions) {
+		opts.Server.Cookie.Expire = options.Duration(time.Duration(23) * time.Hour)
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -935,8 +935,8 @@ func TestProcessCookieRefreshNotSet(t *testing.T) {
 }
 
 func TestProcessCookieFailIfCookieExpired(t *testing.T) {
-	pcTest, err := NewProcessCookieTestWithOptionsModifiers(func(opts *options.Options) {
-		opts.Cookie.Expire = time.Duration(24) * time.Hour
+	pcTest, err := NewProcessCookieTestWithOptionsModifiers(func(opts *options.AlphaOptions) {
+		opts.Server.Cookie.Expire = options.Duration(time.Duration(24) * time.Hour)
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -955,8 +955,8 @@ func TestProcessCookieFailIfCookieExpired(t *testing.T) {
 }
 
 func TestProcessCookieFailIfRefreshSetAndCookieExpired(t *testing.T) {
-	pcTest, err := NewProcessCookieTestWithOptionsModifiers(func(opts *options.Options) {
-		opts.Cookie.Expire = time.Duration(24) * time.Hour
+	pcTest, err := NewProcessCookieTestWithOptionsModifiers(func(opts *options.AlphaOptions) {
+		opts.Server.Cookie.Expire = options.Duration(time.Duration(24) * time.Hour)
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -967,7 +967,7 @@ func TestProcessCookieFailIfRefreshSetAndCookieExpired(t *testing.T) {
 	err = pcTest.SaveSession(startSession)
 	assert.NoError(t, err)
 
-	pcTest.proxy.CookieOptions.Refresh = time.Hour
+	pcTest.proxy.CookieOptions.Refresh = options.Duration(time.Hour)
 	session, err := pcTest.LoadCookiedSession()
 	assert.NotEqual(t, nil, err)
 	if session != nil {
@@ -981,7 +981,7 @@ func NewUserInfoEndpointTest() (*ProcessCookieTest, error) {
 		return nil, err
 	}
 	pcTest.req, _ = http.NewRequest("GET",
-		pcTest.opts.ProxyPrefix+"/userinfo", nil)
+		pcTest.opts.Server.ProxyPrefix+"/userinfo", nil)
 	return pcTest, nil
 }
 
@@ -1075,7 +1075,7 @@ func NewAuthOnlyEndpointTest(querystring string, modifiers ...OptionsModifier) (
 	}
 	pcTest.req, _ = http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/auth%s", pcTest.opts.ProxyPrefix, querystring),
+		fmt.Sprintf("%s/auth%s", pcTest.opts.Server.ProxyPrefix, querystring),
 		nil)
 	return pcTest, nil
 }
@@ -1111,8 +1111,8 @@ func TestAuthOnlyEndpointUnauthorizedOnNoCookieSetError(t *testing.T) {
 }
 
 func TestAuthOnlyEndpointUnauthorizedOnExpiration(t *testing.T) {
-	test, err := NewAuthOnlyEndpointTest("", func(opts *options.Options) {
-		opts.Cookie.Expire = time.Duration(24) * time.Hour
+	test, err := NewAuthOnlyEndpointTest("", func(opts *options.AlphaOptions) {
+		opts.Server.Cookie.Expire = options.Duration(time.Duration(24) * time.Hour)
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -1214,7 +1214,7 @@ func TestAuthOnlyEndpointSetXAuthRequestHeaders(t *testing.T) {
 
 	pcTest.rw = httptest.NewRecorder()
 	pcTest.req, _ = http.NewRequest("GET",
-		pcTest.opts.ProxyPrefix+"/auth", nil)
+		pcTest.opts.Server.ProxyPrefix+"/auth", nil)
 
 	created := time.Now()
 	startSession := &sessions.SessionState{
@@ -1307,7 +1307,7 @@ func TestAuthOnlyEndpointSetBasicAuthTrueRequestHeaders(t *testing.T) {
 
 	pcTest.rw = httptest.NewRecorder()
 	pcTest.req, _ = http.NewRequest("GET",
-		pcTest.opts.ProxyPrefix+"/auth", nil)
+		pcTest.opts.Server.ProxyPrefix+"/auth", nil)
 
 	created := time.Now()
 	startSession := &sessions.SessionState{
@@ -1387,7 +1387,7 @@ func TestAuthOnlyEndpointSetBasicAuthFalseRequestHeaders(t *testing.T) {
 
 	pcTest.rw = httptest.NewRecorder()
 	pcTest.req, _ = http.NewRequest("GET",
-		pcTest.opts.ProxyPrefix+"/auth", nil)
+		pcTest.opts.Server.ProxyPrefix+"/auth", nil)
 
 	created := time.Now()
 	startSession := &sessions.SessionState{
@@ -1413,7 +1413,7 @@ func TestAuthSkippedForPreflightRequests(t *testing.T) {
 	t.Cleanup(upstreamServer.Close)
 
 	opts := baseTestOptions()
-	opts.UpstreamServers = options.UpstreamConfig{
+	opts.UpstreamConfig = options.UpstreamConfig{
 		Upstreams: []options.Upstream{
 			{
 				ID:   upstreamServer.URL,
@@ -1422,7 +1422,7 @@ func TestAuthSkippedForPreflightRequests(t *testing.T) {
 			},
 		},
 	}
-	opts.SkipAuthPreflight = true
+	opts.Server.SkipAuthPreflight = true
 	err := validation.Validate(opts)
 	assert.NoError(t, err)
 
@@ -1470,7 +1470,7 @@ func (v *SignatureAuthenticator) Authenticate(w http.ResponseWriter, r *http.Req
 }
 
 type SignatureTest struct {
-	opts          *options.Options
+	opts          *options.AlphaOptions
 	upstream      *httptest.Server
 	upstreamHost  string
 	provider      *httptest.Server
@@ -1482,7 +1482,7 @@ type SignatureTest struct {
 
 func NewSignatureTest() (*SignatureTest, error) {
 	opts := baseTestOptions()
-	opts.EmailDomains = []string{"acm.org"}
+	opts.Server.EmailDomains = []string{"acm.org"}
 
 	authenticator := &SignatureAuthenticator{}
 	upstreamServer := httptest.NewServer(
@@ -1491,7 +1491,7 @@ func NewSignatureTest() (*SignatureTest, error) {
 	if err != nil {
 		return nil, err
 	}
-	opts.UpstreamServers = options.UpstreamConfig{
+	opts.UpstreamConfig = options.UpstreamConfig{
 		Upstreams: []options.Upstream{
 			{
 				ID:   upstreamServer.URL,
@@ -1617,7 +1617,7 @@ func TestRequestSignature(t *testing.T) {
 			}
 			t.Cleanup(st.Close)
 			if tc.key != "" {
-				st.opts.SignatureKey = fmt.Sprintf("sha1:%s", tc.key)
+				st.opts.Server.SignatureKey = fmt.Sprintf("sha1:%s", tc.key)
 			}
 			err = st.MakeRequestWithExpectedKey(tc.method, tc.body, tc.key)
 			assert.NoError(t, err)
@@ -1628,14 +1628,14 @@ func TestRequestSignature(t *testing.T) {
 }
 
 type ajaxRequestTest struct {
-	opts  *options.Options
+	opts  *options.AlphaOptions
 	proxy *OAuthProxy
 }
 
 func newAjaxRequestTest(forceJSONErrors bool) (*ajaxRequestTest, error) {
 	test := &ajaxRequestTest{}
 	test.opts = baseTestOptions()
-	test.opts.ForceJSONErrors = forceJSONErrors
+	test.opts.Server.ForceJSONErrors = forceJSONErrors
 	err := validation.Validate(test.opts)
 	if err != nil {
 		return nil, err
@@ -1716,18 +1716,18 @@ func TestAjaxForbiddendRequest(t *testing.T) {
 
 func TestClearSplitCookie(t *testing.T) {
 	opts := baseTestOptions()
-	opts.Cookie.Secret = base64CookieSecret
-	opts.Cookie.Name = "oauth2"
-	opts.Cookie.Domains = []string{"abc"}
+	opts.Server.Cookie.Secret = base64CookieSecret
+	opts.Server.Cookie.Name = "oauth2"
+	opts.Server.Cookie.Domains = []string{"abc"}
 	err := validation.Validate(opts)
 	assert.NoError(t, err)
 
-	store, err := sessionscookie.NewCookieSessionStore(&opts.Session, &opts.Cookie)
+	store, err := sessionscookie.NewCookieSessionStore(&opts.Server.Session, &opts.Server.Cookie)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	p := OAuthProxy{CookieOptions: &opts.Cookie, sessionStore: store}
+	p := OAuthProxy{CookieOptions: &opts.Server.Cookie, sessionStore: store}
 	var rw = httptest.NewRecorder()
 	req := httptest.NewRequest("get", "/", nil)
 
@@ -1753,14 +1753,14 @@ func TestClearSplitCookie(t *testing.T) {
 
 func TestClearSingleCookie(t *testing.T) {
 	opts := baseTestOptions()
-	opts.Cookie.Name = "oauth2"
-	opts.Cookie.Domains = []string{"abc"}
-	store, err := sessionscookie.NewCookieSessionStore(&opts.Session, &opts.Cookie)
+	opts.Server.Cookie.Name = "oauth2"
+	opts.Server.Cookie.Domains = []string{"abc"}
+	store, err := sessionscookie.NewCookieSessionStore(&opts.Server.Session, &opts.Server.Cookie)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	p := OAuthProxy{CookieOptions: &opts.Cookie, sessionStore: store}
+	p := OAuthProxy{CookieOptions: &opts.Server.Cookie, sessionStore: store}
 	var rw = httptest.NewRecorder()
 	req := httptest.NewRequest("get", "/", nil)
 
@@ -1819,7 +1819,7 @@ func TestGetJwtSession(t *testing.T) {
 	}
 	internalVerifier := internaloidc.NewVerifier(verifier, verificationOptions)
 
-	test, err := NewAuthOnlyEndpointTest("", func(opts *options.Options) {
+	test, err := NewAuthOnlyEndpointTest("", func(opts *options.AlphaOptions) {
 		opts.InjectRequestHeaders = []options.Header{
 			{
 				Name: "Authorization",
@@ -1887,7 +1887,7 @@ func TestGetJwtSession(t *testing.T) {
 				},
 			},
 		}
-		opts.SkipJwtBearerTokens = true
+		opts.Server.SkipJwtBearerTokens = true
 		opts.SetJWTBearerVerifiers(append(opts.GetJWTBearerVerifiers(), internalVerifier))
 	})
 	if err != nil {
@@ -1945,7 +1945,7 @@ func Test_noCacheHeaders(t *testing.T) {
 	t.Cleanup(upstreamServer.Close)
 
 	opts := baseTestOptions()
-	opts.UpstreamServers = options.UpstreamConfig{
+	opts.UpstreamConfig = options.UpstreamConfig{
 		Upstreams: []options.Upstream{
 			{
 				ID:   upstreamServer.URL,
@@ -1954,7 +1954,7 @@ func Test_noCacheHeaders(t *testing.T) {
 			},
 		},
 	}
-	opts.SkipAuthRegex = []string{".*"}
+	opts.Server.SkipAuthRegex = []string{".*"}
 	err := validation.Validate(opts)
 	assert.NoError(t, err)
 	proxy, err := NewOAuthProxy(opts, func(_ string) bool { return true })
@@ -2026,13 +2026,14 @@ func Test_noCacheHeaders(t *testing.T) {
 	})
 }
 
-func baseTestOptions() *options.Options {
-	opts := options.NewOptions()
-	opts.Cookie.Secret = rawCookieSecret
+func baseTestOptions() *options.AlphaOptions {
+	opts := options.NewAlphaOptions()
+	opts.Server.DefaultProvider = "providerID"
+	opts.Server.Cookie.Secret = rawCookieSecret
 	opts.Providers[0].ID = "providerID"
 	opts.Providers[0].ClientID = clientID
 	opts.Providers[0].ClientSecret = clientSecret
-	opts.EmailDomains = []string{"*"}
+	opts.Server.EmailDomains = []string{"*"}
 
 	// Default injected headers for legacy configuration
 	opts.InjectRequestHeaders = []options.Header{
@@ -2217,7 +2218,7 @@ func TestTrustedIPs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			opts := baseTestOptions()
-			opts.UpstreamServers = options.UpstreamConfig{
+			opts.UpstreamConfig = options.UpstreamConfig{
 				Upstreams: []options.Upstream{
 					{
 						ID:     "static",
@@ -2226,9 +2227,9 @@ func TestTrustedIPs(t *testing.T) {
 					},
 				},
 			}
-			opts.TrustedIPs = tt.trustedIPs
-			opts.ReverseProxy = tt.reverseProxy
-			opts.RealClientIPHeader = tt.realClientIPHeader
+			opts.Server.TrustedIPs = tt.trustedIPs
+			opts.Server.ReverseProxy = tt.reverseProxy
+			opts.Server.RealClientIPHeader = tt.realClientIPHeader
 			err := validation.Validate(opts)
 			assert.NoError(t, err)
 
@@ -2401,9 +2402,11 @@ func Test_buildRoutesAllowlist(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := &options.Options{
-				SkipAuthRegex:  tc.skipAuthRegex,
-				SkipAuthRoutes: tc.skipAuthRoutes,
+			opts := &options.AlphaOptions{
+				Server: options.Server{
+					SkipAuthRegex:  tc.skipAuthRegex,
+					SkipAuthRoutes: tc.skipAuthRoutes,
+				},
 			}
 			routes, err := buildRoutesAllowlist(opts)
 			if tc.shouldError {
@@ -2452,7 +2455,7 @@ func TestApiRoutes(t *testing.T) {
 	t.Cleanup(uiServer.Close)
 
 	opts := baseTestOptions()
-	opts.UpstreamServers = options.UpstreamConfig{
+	opts.UpstreamConfig = options.UpstreamConfig{
 		Upstreams: []options.Upstream{
 			{
 				ID:   apiServer.URL,
@@ -2471,10 +2474,10 @@ func TestApiRoutes(t *testing.T) {
 			},
 		},
 	}
-	opts.APIRoutes = []string{
+	opts.Server.APIRoutes = []string{
 		"^/api",
 	}
-	opts.SkipProviderButton = true
+	opts.Server.SkipProviderButton = true
 	err := validation.Validate(opts)
 	assert.NoError(t, err)
 	proxy, err := NewOAuthProxy(opts, func(_ string) bool { return true })
@@ -2531,6 +2534,82 @@ func TestApiRoutes(t *testing.T) {
 		})
 	}
 }
+func TestAllowedBasicAuthUsers(t *testing.T) {
+	upstreamServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		_, err := w.Write([]byte("Allowed Request"))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}))
+	t.Cleanup(upstreamServer.Close)
+
+	opts := baseTestOptions()
+	opts.UpstreamConfig = options.UpstreamConfig{
+		Upstreams: []options.Upstream{
+			{
+				ID:   upstreamServer.URL,
+				Path: "/",
+				URI:  upstreamServer.URL,
+			},
+		},
+	}
+	opts.Server.SkipBasicAuthUsers = []string{
+		"TEST_USER",
+	}
+	opts.Server.SkipAuthPreflight = true
+	opts.Server.SkipProviderButton = true
+
+	err := validation.Validate(opts)
+	assert.NoError(t, err)
+	proxy, err := NewOAuthProxy(opts, func(_ string) bool { return true })
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		name    string
+		method  string
+		user    string
+		allowed bool
+	}{
+		{
+			name:    "Allowed Basic User GET call",
+			method:  "GET",
+			user:    "TEST_USER",
+			allowed: true,
+		},
+		{
+			name:    "Allowed Basic User POST call",
+			method:  "POST",
+			user:    "TEST_USER",
+			allowed: true,
+		},
+		{
+			name:    "Denied Basic User POST call",
+			method:  "GET",
+			user:    "OTHER_USER",
+			allowed: false,
+		},
+		{
+			name:    "Denied Basic User GET call",
+			method:  "GET",
+			user:    "OTHER_USER",
+			allowed: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			auth := base64.StdEncoding.EncodeToString([]byte(tc.user + ":password"))
+
+			req, err := http.NewRequest(tc.method, "/", nil)
+			req.Header.Add("Authorization", "Basic "+auth)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.allowed, proxy.isSkippingBasicAuthUsers(req))
+		})
+	}
+}
 
 func TestAllowedRequest(t *testing.T) {
 	upstreamServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2543,7 +2622,7 @@ func TestAllowedRequest(t *testing.T) {
 	t.Cleanup(upstreamServer.Close)
 
 	opts := baseTestOptions()
-	opts.UpstreamServers = options.UpstreamConfig{
+	opts.UpstreamConfig = options.UpstreamConfig{
 		Upstreams: []options.Upstream{
 			{
 				ID:   upstreamServer.URL,
@@ -2552,10 +2631,10 @@ func TestAllowedRequest(t *testing.T) {
 			},
 		},
 	}
-	opts.SkipAuthRegex = []string{
+	opts.Server.SkipAuthRegex = []string{
 		"^/skip/auth/regex$",
 	}
-	opts.SkipAuthRoutes = []string{
+	opts.Server.SkipAuthRoutes = []string{
 		"GET=^/skip/auth/routes/get",
 	}
 	err := validation.Validate(opts)
@@ -2645,7 +2724,7 @@ func TestAllowedRequestNegateWithoutMethod(t *testing.T) {
 	t.Cleanup(upstreamServer.Close)
 
 	opts := baseTestOptions()
-	opts.UpstreamServers = options.UpstreamConfig{
+	opts.UpstreamConfig = options.UpstreamConfig{
 		Upstreams: []options.Upstream{
 			{
 				ID:   upstreamServer.URL,
@@ -2654,7 +2733,7 @@ func TestAllowedRequestNegateWithoutMethod(t *testing.T) {
 			},
 		},
 	}
-	opts.SkipAuthRoutes = []string{
+	opts.Server.SkipAuthRoutes = []string{
 		"!=^/api", // any non-api routes
 		"POST=^/api/public-entity/?$",
 	}
@@ -2745,7 +2824,7 @@ func TestAllowedRequestNegateWithMethod(t *testing.T) {
 	t.Cleanup(upstreamServer.Close)
 
 	opts := baseTestOptions()
-	opts.UpstreamServers = options.UpstreamConfig{
+	opts.UpstreamConfig = options.UpstreamConfig{
 		Upstreams: []options.Upstream{
 			{
 				ID:   upstreamServer.URL,
@@ -2754,7 +2833,7 @@ func TestAllowedRequestNegateWithMethod(t *testing.T) {
 			},
 		},
 	}
-	opts.SkipAuthRoutes = []string{
+	opts.Server.SkipAuthRoutes = []string{
 		"GET!=^/api", // any non-api routes
 		"POST=^/api/public-entity/?$",
 	}
@@ -2864,9 +2943,9 @@ func TestProxyAllowedGroups(t *testing.T) {
 			}))
 			t.Cleanup(upstreamServer.Close)
 
-			test, err := NewProcessCookieTestWithOptionsModifiers(func(opts *options.Options) {
+			test, err := NewProcessCookieTestWithOptionsModifiers(func(opts *options.AlphaOptions) {
 				opts.Providers[0].AllowedGroups = tt.allowedGroups
-				opts.UpstreamServers = options.UpstreamConfig{
+				opts.UpstreamConfig = options.UpstreamConfig{
 					Upstreams: []options.Upstream{
 						{
 							ID:   upstreamServer.URL,
@@ -2995,7 +3074,7 @@ func TestAuthOnlyAllowedGroups(t *testing.T) {
 				CreatedAt:   &created,
 			}
 
-			test, err := NewAuthOnlyEndpointTest(tc.querystring, func(opts *options.Options) {
+			test, err := NewAuthOnlyEndpointTest(tc.querystring, func(opts *options.AlphaOptions) {
 				opts.Providers[0].AllowedGroups = tc.allowedGroups
 			})
 			if err != nil {
@@ -3071,9 +3150,9 @@ func TestAuthOnlyAllowedGroupsWithSkipMethods(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			test, err := NewAuthOnlyEndpointTest("?allowed_groups=a,b", func(opts *options.Options) {
-				opts.SkipAuthPreflight = true
-				opts.TrustedIPs = []string{"1.2.3.4"}
+			test, err := NewAuthOnlyEndpointTest("?allowed_groups=a,b", func(opts *options.AlphaOptions) {
+				opts.Server.SkipAuthPreflight = true
+				opts.Server.TrustedIPs = []string{"1.2.3.4"}
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -3177,7 +3256,7 @@ func TestAuthOnlyAllowedEmailDomains(t *testing.T) {
 				CreatedAt:   &created,
 			}
 
-			test, err := NewAuthOnlyEndpointTest(tc.querystring, func(opts *options.Options) {})
+			test, err := NewAuthOnlyEndpointTest(tc.querystring, func(opts *options.AlphaOptions) {})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -3244,7 +3323,7 @@ func TestAuthOnlyAllowedEmails(t *testing.T) {
 				CreatedAt:   &created,
 			}
 
-			test, err := NewAuthOnlyEndpointTest(tc.querystring, func(opts *options.Options) {})
+			test, err := NewAuthOnlyEndpointTest(tc.querystring, func(opts *options.AlphaOptions) {})
 			if err != nil {
 				t.Fatal(err)
 			}

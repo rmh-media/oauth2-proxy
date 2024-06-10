@@ -21,7 +21,7 @@ import (
 // Ginkgo has unpacked the tests.
 // Interfaces have to be wrapped in closures otherwise nil pointers are thrown.
 type testInput struct {
-	cookieOpts            *options.Cookie
+	cookieOpts            *options.CookieOptions
 	ss                    sessionStoreFunc
 	session               *sessionsapi.SessionState
 	request               *http.Request
@@ -38,7 +38,7 @@ type PersistentStoreFastForwardFunc func(time.Duration) error
 
 // NewSessionStoreFunc allows any session store implementation to configure their
 // own session store before each test.
-type NewSessionStoreFunc func(sessionOpts *options.SessionOptions, cookieOpts *options.Cookie) (sessionsapi.SessionStore, error)
+type NewSessionStoreFunc func(sessionOpts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessionsapi.SessionStore, error)
 
 func RunSessionStoreTests(newSS NewSessionStoreFunc, persistentFastForward PersistentStoreFastForwardFunc) {
 	Describe("Session Store Suite", func() {
@@ -62,11 +62,11 @@ func RunSessionStoreTests(newSS NewSessionStoreFunc, persistentFastForward Persi
 			Expect(err).ToNot(HaveOccurred())
 
 			// Set default options in CookieOptions
-			cookieOpts := &options.Cookie{
+			cookieOpts := &options.CookieOptions{
 				Name:     "_oauth2_proxy",
 				Path:     "/",
-				Expire:   time.Duration(168) * time.Hour,
-				Refresh:  time.Duration(1) * time.Hour,
+				Expire:   options.Duration(time.Duration(168) * time.Hour),
+				Refresh:  options.Duration(time.Duration(1) * time.Hour),
 				Secure:   true,
 				HTTPOnly: true,
 				SameSite: "",
@@ -111,11 +111,11 @@ func RunSessionStoreTests(newSS NewSessionStoreFunc, persistentFastForward Persi
 
 		Context("with non-default options", func() {
 			BeforeEach(func() {
-				input.cookieOpts = &options.Cookie{
+				input.cookieOpts = &options.CookieOptions{
 					Name:     "_cookie_name",
 					Path:     "/path",
-					Expire:   time.Duration(72) * time.Hour,
-					Refresh:  time.Duration(2) * time.Hour,
+					Expire:   options.Duration(time.Duration(72) * time.Hour),
+					Refresh:  options.Duration(time.Duration(2) * time.Hour),
 					Secure:   false,
 					HTTPOnly: false,
 					Domains:  []string{"example.com"},
@@ -260,7 +260,7 @@ func PersistentSessionStoreInterfaceTests(in *testInput) {
 
 		Context("after the refresh period, but before the cookie expire period", func() {
 			BeforeEach(func() {
-				Expect(in.persistentFastForward(in.cookieOpts.Refresh + time.Minute)).To(Succeed())
+				Expect(in.persistentFastForward(in.cookieOpts.Refresh.Duration() + time.Minute)).To(Succeed())
 			})
 
 			LoadSessionTests(in)
@@ -271,7 +271,7 @@ func PersistentSessionStoreInterfaceTests(in *testInput) {
 			var err error
 
 			BeforeEach(func() {
-				Expect(in.persistentFastForward(in.cookieOpts.Expire + time.Minute)).To(Succeed())
+				Expect(in.persistentFastForward(in.cookieOpts.Expire.Duration() + time.Minute)).To(Succeed())
 
 				loadedSession, err = in.ss().Load(in.request)
 				Expect(err).To(HaveOccurred())
@@ -385,7 +385,7 @@ func SessionStoreInterfaceTests(in *testInput) {
 				broken := "BrokenSessionFromADifferentSessionImplementation"
 				value, err := encryption.SignedValue(in.cookieOpts.Secret, in.cookieOpts.Name, []byte(broken), time.Now())
 				Expect(err).ToNot(HaveOccurred())
-				cookie := cookiesapi.MakeCookieFromOptions(in.request, in.cookieOpts.Name, value, in.cookieOpts, in.cookieOpts.Expire, time.Now())
+				cookie := cookiesapi.MakeCookieFromOptions(in.request, in.cookieOpts.Name, value, in.cookieOpts, in.cookieOpts.Expire.Duration(), time.Now())
 				in.request.AddCookie(cookie)
 
 				err = in.ss().Save(in.response, in.request, in.session)

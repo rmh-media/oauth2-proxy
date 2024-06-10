@@ -11,8 +11,8 @@ import (
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/sessions/redis"
 )
 
-func validateSessionCookieMinimal(o *options.Options) []string {
-	if !o.Session.Cookie.Minimal {
+func validateSessionCookieMinimal(o *options.AlphaOptions) []string {
+	if !o.Server.Session.Cookie.Minimal {
 		return []string{}
 	}
 
@@ -32,7 +32,7 @@ func validateSessionCookieMinimal(o *options.Options) []string {
 		}
 	}
 
-	if o.Cookie.Refresh != time.Duration(0) {
+	if o.Server.Cookie.Refresh.Duration() != time.Duration(0) {
 		msgs = append(msgs,
 			"cookie_refresh > 0 requires oauth tokens in sessions. session_cookie_minimal cannot be set")
 	}
@@ -41,12 +41,12 @@ func validateSessionCookieMinimal(o *options.Options) []string {
 
 // validateRedisSessionStore builds a Redis Client from the options and
 // attempts to connect, Set, Get and Del a random health check key
-func validateRedisSessionStore(o *options.Options) []string {
-	if o.Session.Type != options.RedisSessionStoreType {
+func validateRedisSessionStore(o *options.AlphaOptions) []string {
+	if o.Server.Session.Type != options.RedisSessionStoreType {
 		return []string{}
 	}
 
-	client, err := redis.NewRedisClient(o.Session.Redis)
+	client, err := redis.NewRedisClient(o.Server.Session.Redis)
 	if err != nil {
 		return []string{fmt.Sprintf("unable to initialize a redis client: %v", err)}
 	}
@@ -57,7 +57,7 @@ func validateRedisSessionStore(o *options.Options) []string {
 	}
 	nonce := base64.RawURLEncoding.EncodeToString(n)
 
-	key := fmt.Sprintf("%s-healthcheck-%s", o.Cookie.Name, nonce)
+	key := fmt.Sprintf("%s-healthcheck-%s", o.Server.Cookie.Name, nonce)
 	return sendRedisConnectionTest(client, key, nonce)
 }
 

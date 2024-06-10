@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("Providers", func() {
 	type validateProvidersTableInput struct {
-		options    *options.Options
+		options    *options.AlphaOptions
 		errStrings []string
 	}
 
@@ -34,18 +34,18 @@ var _ = Describe("Providers", func() {
 	missingProvider := "at least one provider has to be defined"
 	emptyIDMsg := "provider has empty id: ids are required for all providers"
 	duplicateProviderIDMsg := "multiple providers found with id ProviderID: provider ids must be unique"
-	skipButtonAndMultipleProvidersMsg := "SkipProviderButton and multiple providers are mutually exclusive"
+	skipButtonAndMultipleProvidersMsg := "SkipProviderButton and multiple providers exclude each other if no matching groups are configured"
 
 	DescribeTable("validateProviders",
 		func(o *validateProvidersTableInput) {
 			Expect(validateProviders(o.options)).To(ConsistOf(o.errStrings))
 		},
 		Entry("with no providers", &validateProvidersTableInput{
-			options:    &options.Options{},
+			options:    &options.AlphaOptions{},
 			errStrings: []string{missingProvider},
 		}),
 		Entry("with valid providers", &validateProvidersTableInput{
-			options: &options.Options{
+			options: &options.AlphaOptions{
 				Providers: options.Providers{
 					validProvider,
 					validLoginGovProvider,
@@ -54,7 +54,7 @@ var _ = Describe("Providers", func() {
 			errStrings: []string{},
 		}),
 		Entry("with an empty providerID", &validateProvidersTableInput{
-			options: &options.Options{
+			options: &options.AlphaOptions{
 				Providers: options.Providers{
 					missingIDProvider,
 				},
@@ -62,7 +62,7 @@ var _ = Describe("Providers", func() {
 			errStrings: []string{emptyIDMsg},
 		}),
 		Entry("with same providerID", &validateProvidersTableInput{
-			options: &options.Options{
+			options: &options.AlphaOptions{
 				Providers: options.Providers{
 					validProvider,
 					validProvider,
@@ -71,8 +71,10 @@ var _ = Describe("Providers", func() {
 			errStrings: []string{duplicateProviderIDMsg},
 		}),
 		Entry("with multiple providers and skip provider button", &validateProvidersTableInput{
-			options: &options.Options{
-				SkipProviderButton: true,
+			options: &options.AlphaOptions{
+				Server: options.Server{
+					SkipProviderButton: true,
+				},
 				Providers: options.Providers{
 					validProvider,
 					validLoginGovProvider,

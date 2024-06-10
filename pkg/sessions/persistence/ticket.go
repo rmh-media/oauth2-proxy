@@ -40,12 +40,12 @@ type initLockFunc func(string) sessions.Lock
 type ticket struct {
 	id      string
 	secret  []byte
-	options *options.Cookie
+	options *options.CookieOptions
 }
 
 // newTicket creates a new ticket. The ID & secret will be randomly created
 // with 16 byte sizes. The ID will be prefixed & hex encoded.
-func newTicket(cookieOpts *options.Cookie) (*ticket, error) {
+func newTicket(cookieOpts *options.CookieOptions) (*ticket, error) {
 	rawID := make([]byte, 16)
 	if _, err := io.ReadFull(rand.Reader, rawID); err != nil {
 		return nil, fmt.Errorf("failed to create new ticket ID: %v", err)
@@ -71,7 +71,7 @@ func (t *ticket) encodeTicket() string {
 }
 
 // decodeTicket decodes an encoded ticket string
-func decodeTicket(encTicket string, cookieOpts *options.Cookie) (*ticket, error) {
+func decodeTicket(encTicket string, cookieOpts *options.CookieOptions) (*ticket, error) {
 	ticketParts := strings.Split(encTicket, ".")
 	if len(ticketParts) != 2 {
 		return nil, errors.New("failed to decode ticket")
@@ -92,7 +92,7 @@ func decodeTicket(encTicket string, cookieOpts *options.Cookie) (*ticket, error)
 
 // decodeTicketFromRequest retrieves a potential ticket cookie from a request
 // and decodes it to a ticket.
-func decodeTicketFromRequest(req *http.Request, cookieOpts *options.Cookie) (*ticket, error) {
+func decodeTicketFromRequest(req *http.Request, cookieOpts *options.CookieOptions) (*ticket, error) {
 	requestCookie, err := req.Cookie(cookieOpts.Name)
 	if err != nil {
 		// Don't wrap this error to allow `err == http.ErrNoCookie` checks
@@ -100,7 +100,7 @@ func decodeTicketFromRequest(req *http.Request, cookieOpts *options.Cookie) (*ti
 	}
 
 	// An existing cookie exists, try to retrieve the ticket
-	val, _, ok := encryption.Validate(requestCookie, cookieOpts.Secret, cookieOpts.Expire)
+	val, _, ok := encryption.Validate(requestCookie, cookieOpts.Secret, cookieOpts.Expire.Duration())
 	if !ok {
 		return nil, fmt.Errorf("session ticket cookie failed validation: %v", err)
 	}
@@ -120,7 +120,7 @@ func (t *ticket) saveSession(s *sessions.SessionState, saver saveFunc) error {
 	if err != nil {
 		return fmt.Errorf("failed to encode the session state with the ticket: %v", err)
 	}
-	return saver(t.id, ciphertext, t.options.Expire)
+	return saver(t.id, ciphertext, t.options.Expire.Duration())
 }
 
 // loadSession loads a session from the disk store via the passed loadFunc
@@ -157,7 +157,7 @@ func (t *ticket) setCookie(rw http.ResponseWriter, req *http.Request, s *session
 	ticketCookie, err := t.makeCookie(
 		req,
 		t.encodeTicket(),
-		t.options.Expire,
+		t.options.Expire.Duration(),
 		*s.CreatedAt,
 	)
 	if err != nil {

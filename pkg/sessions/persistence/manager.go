@@ -13,12 +13,12 @@ import (
 // sessions.SessionStore with its use of session tickets
 type Manager struct {
 	Store   Store
-	Options *options.Cookie
+	Options *options.CookieOptions
 }
 
 // NewManager creates a Manager that can wrap a Store and manage the
 // sessions.SessionStore implementation details
-func NewManager(store Store, cookieOpts *options.Cookie) *Manager {
+func NewManager(store Store, cookieOpts *options.CookieOptions) *Manager {
 	return &Manager{
 		Store:   store,
 		Options: cookieOpts,

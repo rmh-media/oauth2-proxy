@@ -9,14 +9,14 @@ import (
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/encryption"
 )
 
-func validateCookie(o options.Cookie) []string {
+func validateCookie(o options.CookieOptions) []string {
 	msgs := validateCookieSecret(o.Secret)
 
-	if o.Refresh >= o.Expire {
+	if o.Refresh.Duration() >= o.Expire.Duration() {
 		msgs = append(msgs, fmt.Sprintf(
 			"cookie_refresh (%q) must be less than cookie_expire (%q)",
-			o.Refresh.String(),
-			o.Expire.String()))
+			o.Refresh.Duration().String(),
+			o.Expire.Duration().String()))
 	}
 
 	switch o.SameSite {

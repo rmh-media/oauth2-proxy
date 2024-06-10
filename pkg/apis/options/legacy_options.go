@@ -85,7 +85,7 @@ func (l *LegacyOptions) ToOptions() (*Options, error) {
 
 	l.Options.Server, l.Options.MetricsServer = l.LegacyServer.convert()
 
-	l.Options.LegacyPreferEmailToUser = l.LegacyHeaders.PreferEmailToUser
+	l.Options.Server.LegacyPreferEmailToUser = l.LegacyHeaders.PreferEmailToUser
 
 	providers, err := l.LegacyProvider.convert()
 	if err != nil {
@@ -94,6 +94,26 @@ func (l *LegacyOptions) ToOptions() (*Options, error) {
 	l.Options.Providers = providers
 
 	return &l.Options, nil
+}
+
+func (l *LegacyOptions) ToAlphaOptions() *AlphaOptions {
+	alphaOptions := NewAlphaOptions()
+
+	alphaOptions.UpstreamConfig = l.Options.UpstreamServers
+
+	alphaOptions.InjectRequestHeaders, alphaOptions.InjectResponseHeaders = l.LegacyHeaders.convert()
+
+	alphaOptions.Server, alphaOptions.MetricsServer = l.LegacyServer.convert()
+
+	// l.Options.Server.LegacyPreferEmailToUser = l.LegacyHeaders.PreferEmailToUser
+
+	// providers, err := l.LegacyProvider.convert()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error converting provider: %v", err)
+	// }
+	// l.Options.Providers = providers
+
+	return alphaOptions
 }
 
 type LegacyUpstreams struct {

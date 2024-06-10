@@ -3,6 +3,7 @@ package options
 import (
 	"crypto"
 	"net/url"
+	"time"
 
 	ipapi "github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/ip"
 	internaloidc "github.com/oauth2-proxy/oauth2-proxy/v7/pkg/providers/oidc"
@@ -78,22 +79,6 @@ type Options struct {
 	realClientIPParser ipapi.RealClientIPParser
 }
 
-// Options for Getting internal values
-func (o *Options) GetRedirectURL() *url.URL                      { return o.redirectURL }
-func (o *Options) GetSignatureData() *SignatureData              { return o.signatureData }
-func (o *Options) GetOIDCVerifier() internaloidc.IDTokenVerifier { return o.oidcVerifier }
-func (o *Options) GetJWTBearerVerifiers() []internaloidc.IDTokenVerifier {
-	return o.jwtBearerVerifiers
-}
-func (o *Options) GetRealClientIPParser() ipapi.RealClientIPParser { return o.realClientIPParser }
-
-// Options for Setting internal values
-func (o *Options) SetRedirectURL(s *url.URL)                              { o.redirectURL = s }
-func (o *Options) SetSignatureData(s *SignatureData)                      { o.signatureData = s }
-func (o *Options) SetOIDCVerifier(s internaloidc.IDTokenVerifier)         { o.oidcVerifier = s }
-func (o *Options) SetJWTBearerVerifiers(s []internaloidc.IDTokenVerifier) { o.jwtBearerVerifiers = s }
-func (o *Options) SetRealClientIPParser(s ipapi.RealClientIPParser)       { o.realClientIPParser = s }
-
 // NewOptions constructs a new Options with defaulted values
 func NewOptions() *Options {
 	return &Options{
@@ -102,11 +87,23 @@ func NewOptions() *Options {
 		PingPath:           "/ping",
 		RealClientIPHeader: "X-Real-IP",
 		ForceHTTPS:         false,
-		Cookie:             cookieDefaults(),
-		Session:            sessionOptionsDefaults(),
-		Templates:          templatesDefaults(),
-		SkipAuthPreflight:  false,
-		Logging:            loggingDefaults(),
+		Cookie: Cookie{
+			Name:           "_oauth2_proxy",
+			Secret:         "",
+			Domains:        nil,
+			Path:           "/",
+			Expire:         time.Duration(168) * time.Hour,
+			Refresh:        time.Duration(0),
+			Secure:         true,
+			HTTPOnly:       true,
+			SameSite:       "",
+			CSRFPerRequest: false,
+			CSRFExpire:     time.Duration(15) * time.Minute,
+		},
+		Session:           sessionOptionsDefaults(),
+		Templates:         templatesDefaults(),
+		SkipAuthPreflight: false,
+		Logging:           loggingDefaults(),
 	}
 }
 

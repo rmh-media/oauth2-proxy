@@ -31,6 +31,8 @@ type Provider interface {
 	CreateSessionFromToken(ctx context.Context, token string) (*sessions.SessionState, error)
 }
 
+type ProviderMap map[string]Provider
+
 func NewProvider(providerConfig options.Provider) (Provider, error) {
 	providerData, err := newProviderDataFromConfig(providerConfig)
 	if err != nil {
@@ -74,6 +76,8 @@ func newProviderDataFromConfig(providerConfig options.Provider) (*ProviderData, 
 	p := &ProviderData{
 		Scope:            providerConfig.Scope,
 		ClientID:         providerConfig.ClientID,
+		ID:               providerConfig.ID,
+		ProviderName:     providerConfig.Name,
 		ClientSecret:     providerConfig.ClientSecret,
 		ClientSecretFile: providerConfig.ClientSecretFile,
 	}
@@ -190,4 +194,19 @@ func providerRequiresOIDCProviderVerifier(providerType options.ProviderType) (bo
 	default:
 		return false, fmt.Errorf("unknown provider type: %s", providerType)
 	}
+}
+
+func NewProviderMap(providersConfig []options.Provider) (ProviderMap, error) {
+
+	newProviderMap := make(map[string]Provider)
+
+	for i := range providersConfig {
+		provider, err := NewProvider(providersConfig[i])
+		if err != nil {
+			return nil, fmt.Errorf("error intialising provider: %v", err)
+		}
+		newProviderMap[(providersConfig[i].ID)] = provider
+	}
+
+	return newProviderMap, nil
 }

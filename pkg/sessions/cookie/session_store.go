@@ -27,7 +27,7 @@ var _ sessions.SessionStore = &SessionStore{}
 // SessionStore is an implementation of the sessions.SessionStore
 // interface that stores sessions in client side cookies
 type SessionStore struct {
-	Cookie       *options.Cookie
+	Cookie       *options.CookieOptions
 	CookieCipher encryption.Cipher
 	Minimal      bool
 }
@@ -53,7 +53,7 @@ func (s *SessionStore) Load(req *http.Request) (*sessions.SessionState, error) {
 		// always http.ErrNoCookie
 		return nil, err
 	}
-	val, _, ok := encryption.Validate(c, s.Cookie.Secret, s.Cookie.Expire)
+	val, _, ok := encryption.Validate(c, s.Cookie.Secret, s.Cookie.Expire.Duration())
 	if !ok {
 		return nil, errors.New("cookie signature not valid")
 	}
@@ -119,7 +119,7 @@ func (s *SessionStore) makeSessionCookie(req *http.Request, value []byte, now ti
 			return nil, err
 		}
 	}
-	c := s.makeCookie(req, s.Cookie.Name, strValue, s.Cookie.Expire, now)
+	c := s.makeCookie(req, s.Cookie.Name, strValue, s.Cookie.Expire.Duration(), now)
 	if len(c.String()) > maxCookieLength {
 		return splitCookie(c), nil
 	}
@@ -139,7 +139,7 @@ func (s *SessionStore) makeCookie(req *http.Request, name string, value string, 
 
 // NewCookieSessionStore initialises a new instance of the SessionStore from
 // the configuration given
-func NewCookieSessionStore(opts *options.SessionOptions, cookieOpts *options.Cookie) (sessions.SessionStore, error) {
+func NewCookieSessionStore(opts *options.SessionOptions, cookieOpts *options.CookieOptions) (sessions.SessionStore, error) {
 	cipher, err := encryption.NewCFBCipher(encryption.SecretBytes(cookieOpts.Secret))
 	if err != nil {
 		return nil, fmt.Errorf("error initialising cipher: %v", err)

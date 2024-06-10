@@ -3,9 +3,9 @@ package pagewriter
 import (
 	// Import embed to allow importing default logo
 	_ "embed"
-
 	"encoding/base64"
 	"fmt"
+	"github.com/oauth2-proxy/oauth2-proxy/v7/providers"
 	"os"
 	"path/filepath"
 	"strings"
@@ -54,7 +54,7 @@ type signInPageWriter struct {
 
 // WriteSignInPage writes the sign-in page to the given response writer.
 // It uses the redirectURL to be able to set the final destination for the user post login.
-func (s *signInPageWriter) WriteSignInPage(rw http.ResponseWriter, req *http.Request, redirectURL string, statusCode int) {
+func (s *signInPageWriter) WriteSignInPage(rw http.ResponseWriter, req *http.Request, redirectURL string, statusCode int, provider providers.Provider) {
 	// We allow unescaped template.HTML since it is user configured options
 	/* #nosec G203 */
 	t := struct {
@@ -68,7 +68,7 @@ func (s *signInPageWriter) WriteSignInPage(rw http.ResponseWriter, req *http.Req
 		Footer        template.HTML
 		LogoData      template.HTML
 	}{
-		ProviderName:  s.providerName,
+		ProviderName:  provider.Data().ProviderName,
 		SignInMessage: template.HTML(s.signInMessage),
 		StatusCode:    statusCode,
 		CustomLogin:   s.displayLoginForm,

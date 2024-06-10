@@ -10,15 +10,15 @@ import (
 
 // validateProviders is the initial validation migration for multiple providrers
 // It currently includes only logic that can verify the providers one by one and does not break the valdation pipe
-func validateProviders(o *options.Options) []string {
+func validateProviders(o *options.AlphaOptions) []string {
 	msgs := []string{}
 
 	// validate general multiple provider configuration
 	if len(o.Providers) == 0 {
 		msgs = append(msgs, "at least one provider has to be defined")
 	}
-	if o.SkipProviderButton && len(o.Providers) > 1 {
-		msgs = append(msgs, "SkipProviderButton and multiple providers are mutually exclusive")
+	if o.Server.SkipProviderButton && len(o.Providers) > 1 && len(o.Matching) == 0 {
+		msgs = append(msgs, "SkipProviderButton and multiple providers exclude each other if no matching groups are configured")
 	}
 
 	providerIDs := make(map[string]struct{})
