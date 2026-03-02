@@ -1,0 +1,219 @@
+injectRequestHeaders:
+- name: X-Forwarded-Groups
+  values:
+  - claim: groups
+- name: X-Forwarded-User
+  values:
+  - claim: user
+- name: X-Forwarded-Email
+  values:
+  - claim: email
+- name: X-Forwarded-Preferred-Username
+  values:
+  - claim: preferred_username
+metricsServer:
+  APIRoutes: null
+  AuthenticatedEmailsFile: ""
+  BindAddress: ""
+  Cors:
+    AllowedHeaders: null
+    AllowedOrigins: null
+    Credentials: false
+  DefaultProvider: ""
+  EmailDomains: null
+  ExtraJwtIssuers: null
+  ForceHTTPS: false
+  ForceJSONErrors: false
+  GCPHealthChecks: false
+  HtpasswdFile: ""
+  HtpasswdUserGroups: null
+  LegacyPreferEmailToUser: false
+  Logging:
+    AuthEnabled: false
+    AuthFormat: ""
+    ErrToInfo: false
+    ExcludePaths: null
+    File:
+      Compress: false
+      Filename: ""
+      MaxAge: 0
+      MaxBackups: 0
+      MaxSize: 0
+    LocalTime: false
+    RequestEnabled: false
+    RequestFormat: ""
+    RequestIDHeader: ""
+    SilencePing: false
+    StandardEnabled: false
+    StandardFormat: ""
+  PingPath: ""
+  PingUserAgent: ""
+  ProxyPrefix: ""
+  RealClientIPHeader: ""
+  ReverseProxy: false
+  SSLInsecureSkipVerify: false
+  SecureBindAddress: ""
+  Session:
+    Cookie:
+      Minimal: false
+    Redis:
+      CAPath: ""
+      ClusterConnectionURLs: null
+      ConnectionURL: ""
+      IdleTimeout: 0
+      InsecureSkipTLSVerify: false
+      Password: ""
+      SentinelConnectionURLs: null
+      SentinelMasterName: ""
+      SentinelPassword: ""
+      UseCluster: false
+      UseSentinel: false
+    Type: ""
+  SignatureKey: ""
+  SkipAuthPreflight: false
+  SkipAuthRegex: null
+  SkipAuthRoutes: null
+  SkipJwtBearerTokens: false
+  SkipProviderButton: false
+  TLS: null
+  Templates:
+    Banner: ""
+    CustomLogo: ""
+    Debug: false
+    DisplayLoginForm: false
+    Footer: ""
+    Path: ""
+  TrustedIPs: null
+  WhitelistDomains: null
+  cookie:
+    CSRFExpire: 0s
+    CSRFPerRequest: false
+    Domains: null
+    HTTPOnly: false
+    Name: ""
+    Path: ""
+    SameSite: ""
+    Secure: false
+  redirectUrl: ""
+providers:
+- ADFSConfig: {}
+  azureConfig:
+    tenant: common
+  bitbucketConfig: {}
+  clientID: ""
+  clientSecret: ""
+  githubConfig: {}
+  gitlabConfig: {}
+  googleConfig: {}
+  id: oidc=oauth2-proxy
+  keycloakConfig: {}
+  loginGovConfig: {}
+  loginURLParameters:
+  - default:
+    - force
+    name: approval_prompt
+  oidcConfig:
+    audienceClaims:
+    - aud
+    emailClaim: email
+    groupsClaim: groups
+    insecureSkipNonce: true
+    issuerURL: http://dex.localhost:4190/dex
+    userIDClaim: email
+  provider: oidc
+server:
+  APIRoutes: null
+  AuthenticatedEmailsFile: ""
+  BindAddress: 0.0.0.0:4180
+  Cors:
+    AllowedHeaders: null
+    AllowedOrigins: null
+    Credentials: false
+  DefaultProvider: ""
+  EmailDomains:
+  - example.com
+  ExtraJwtIssuers: null
+  ForceHTTPS: false
+  ForceJSONErrors: false
+  GCPHealthChecks: false
+  HtpasswdFile: ""
+  HtpasswdUserGroups: null
+  LegacyPreferEmailToUser: false
+  Logging:
+    AuthEnabled: false
+    AuthFormat: ""
+    ErrToInfo: false
+    ExcludePaths: null
+    File:
+      Compress: false
+      Filename: ""
+      MaxAge: 0
+      MaxBackups: 0
+      MaxSize: 0
+    LocalTime: false
+    RequestEnabled: false
+    RequestFormat: ""
+    RequestIDHeader: ""
+    SilencePing: false
+    StandardEnabled: false
+    StandardFormat: ""
+  PingPath: /ping
+  PingUserAgent: ""
+  ProxyPrefix: /oauth2
+  RealClientIPHeader: X-Real-IP
+  ReverseProxy: false
+  SSLInsecureSkipVerify: false
+  SecureBindAddress: ""
+  Session:
+    Cookie:
+      Minimal: false
+    Redis:
+      CAPath: ""
+      ClusterConnectionURLs: null
+      ConnectionURL: ""
+      IdleTimeout: 0
+      InsecureSkipTLSVerify: false
+      Password: ""
+      SentinelConnectionURLs: null
+      SentinelMasterName: ""
+      SentinelPassword: ""
+      UseCluster: false
+      UseSentinel: false
+    Type: ""
+  SignatureKey: ""
+  SkipAuthPreflight: false
+  SkipAuthRegex: null
+  SkipAuthRoutes: null
+  SkipJwtBearerTokens: false
+  SkipProviderButton: true
+  TLS: null
+  Templates:
+    Banner: ""
+    CustomLogo: ""
+    Debug: false
+    DisplayLoginForm: false
+    Footer: ""
+    Path: ""
+  TrustedIPs: null
+  WhitelistDomains: null
+  cookie:
+    CSRFExpire: 15m0s
+    CSRFPerRequest: false
+    Domains: null
+    HTTPOnly: true
+    Name: ""
+    Path: /
+    SameSite: ""
+    Secure: true
+    expire: 168h0m0s
+    secret: ""
+  redirectUrl: http://127.0.0.1:4180/oauth2/callback
+upstreamConfig:
+  upstreams:
+  - flushInterval: 1s
+    id: /
+    passHostHeader: true
+    path: /
+    proxyWebSockets: true
+    timeout: 30s
+    uri: http://httpbin

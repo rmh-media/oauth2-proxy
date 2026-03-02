@@ -1,0 +1,126 @@
+server:
+  bindAddress: 0.0.0.0:4180
+  emailDomains:
+    - "*"
+  cookie:
+    name: "IAUTHD"
+    secure: false
+    secret: "OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w="
+    refresh: 55m
+    domains:
+        - showcase.test
+  skipProviderButton: true
+  redirectUrl: "/oauth2/callback"
+  skipAuthPreflight: true
+  defaultProvider: demo_showcase_gui
+  skipJwtBearerTokens: true
+  skipAuthRoutes:
+    - "^/sso/renew/token"
+    - "^/sso/webhook/handle"
+    - "^/favicon.ico"
+  skipBasicAuthUsers:
+    - "APP_KEY"
+  cors:
+    credentials: true
+    allowedHeaders:
+      - "*"
+    allowedOrigins:
+      - "(.*\\.)?showcase\\.test?:.*"
+  whitelistDomains:
+    - "*.showcase.test:*"
+    - "id.develop.innoverse.cloud"
+injectRequestHeaders:
+  - name: X-Forwarded-Groups
+    values:
+      - claim: groups
+  - name: X-Forwarded-User
+    values:
+      -   claim: user
+  - name: X-Forwarded-Email
+    values:
+      - claim: email
+  - name: X-Forwarded-Preferred-Username
+    values:
+      - claim: preferred_username
+  - name: X-Forwarded-Access-Token
+    values:
+      - claim: access_token
+  - name: X-Forwarded-ID-Token
+    values:
+      - claim: id_token
+upstreamConfig:
+  upstreams:
+    - flushInterval: 1s
+      id: api
+      passHostHeader: true
+      proxyWebSockets: true
+      timeout: 30s
+      uri: http://demo.showcase.test:11081
+      path: /
+
+providers:
+  -
+    provider: oidc
+    name: demo_showcase_api
+    clientId: innoverse-showcase-api-demo-development
+    clientSecret: YNIPTGDp7QRETBHksNNpRCBK8YWOI0n6
+    id: demo_showcase_api
+    scope: 'openid offline_access'
+    oidcConfig:
+      audienceClaims:
+        - aud
+      emailClaim: email
+      groupsClaim: groups
+      insecureSkipNonce: true
+      issuerURL: 'https://id.develop.innoverse.cloud/realms/innoverse'
+      userIDClaim: email
+  -
+    provider: keycloak-oidc
+    name: demo_showcase_gui
+    clientId: innoverse-showcase-gui-demo-development
+    clientSecret: J6IwcATA6bQc5SpBvMinTLzYIUEY2vpC
+    id: demo_showcase_gui
+    scope: 'openid offline_access'
+    oidcConfig:
+      audienceClaims:
+        - aud
+      emailClaim: email
+      groupsClaim: groups
+      insecureSkipNonce: true
+      issuerURL: 'https://id.develop.innoverse.cloud/realms/innoverse'
+      userIDClaim: email
+matching:
+  -
+    provider: demo_showcase_gui
+    matchers:
+      - type: Domain
+        value: '*.showcase.test:4180'
+
+
+#providers:
+#  - provider: keycloak-oidc
+#    name: 'Demo Client'
+#    clientId: innoverse-showcase-demo-development
+#    clientSecret: dQ2J96HmV1FGBD1v5PmyV1ZMQ2fgfzvt
+#    id: demo_showcase
+#    scope: 'openid offline_access'
+#    oidcConfig:
+#      audienceClaims:
+#        - aud
+#      emailClaim: email
+#      groupsClaim: groups
+#      insecureSkipNonce: true
+#      issuerURL: 'https://id.develop.innoverse.cloud/realms/innoverse'
+#      userIDClaim: email
+#
+#
+#
+#
+#matching:
+#  - provider: demo_showcase
+#    matchers:
+#      - type: Domain
+#        value: demo.api.showcase.test:4180
+#      - type: Regex
+#        value: '(?:http[s]*\\:\\/\\/)demo((-)[a-z0-9_-]+)?\\..?([\\s\\S]*)\\.showcase\\.test([\\s\\S]*)$'
+

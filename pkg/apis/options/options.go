@@ -96,7 +96,7 @@ func NewOptions() *Options {
 			Refresh:        time.Duration(0),
 			Secure:         true,
 			HTTPOnly:       true,
-			SameSite:       "",
+			SameSite:       "lax",
 			CSRFPerRequest: false,
 			CSRFExpire:     time.Duration(15) * time.Minute,
 		},

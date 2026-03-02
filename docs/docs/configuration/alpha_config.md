@@ -47,25 +47,6 @@ When using the `--alpha-config` flag, some options are no longer available.
 See [removed options](#removed-options) below for more information.
 :::
 
-### Converting configuration to the new structure
-
-Before adding the new `--alpha-config` option, start OAuth2 Proxy using the
-`convert-config-to-alpha` flag to convert existing configuration to the new format.
-
-```bash
-oauth2-proxy --convert-config-to-alpha --config ./path/to/existing/config.cfg
-```
-
-This will convert any options supported by the new format to YAML and print the
-new configuration to `STDOUT`.
-
-Copy this to a new file, remove any options from your existing configuration
-noted in [removed options](#removed-options) and then start OAuth2 Proxy using
-the new config.
-
-```bash
-oauth2-proxy --alpha-config ./path/to/new/config.yaml --config ./path/to/existing/config.cfg
-```
 
 ## Removed options
 

@@ -3,7 +3,7 @@ id: overview
 title: Overview
 ---
 
-`oauth2-proxy` can be configured via [command line options](#command-line-options), [environment variables](#environment-variables) or [config file](#config-file) (in decreasing order of precedence, i.e. command line options will overwrite environment variables and environment variables will overwrite configuration file settings).
+`oauth2-proxy` can be configured via [config file](#config-file).
 
 ### Generating a Cookie Secret
 
@@ -66,9 +66,27 @@ import TabItem from '@theme/TabItem';
 
 ### Config File
 
-Every command line argument can be specified in a config file by replacing hyphens (-) with underscores (\_). If the argument can be specified multiple times, the config option should be plural (trailing s).
 
-An example [oauth2-proxy.cfg](https://github.com/oauth2-proxy/oauth2-proxy/blob/master/contrib/oauth2-proxy.cfg.example) config file is in the contrib directory. It can be used by specifying `--config=/etc/oauth2-proxy.cfg`
+An example [oauth2-proxy.yml](https://github.com/oauth2-proxy/oauth2-proxy/blob/master/contrib/oauth2-proxy.yml.example) config file is in the contrib directory. It can be used by specifying `--config=/etc/oauth2-proxy.yml`
+### Converting configuration to the new structure
+
+Before adding the new `--alpha-config` option, start OAuth2 Proxy using the
+`convert-config-to-alpha` flag to convert existing configuration to the new format.
+
+```bash
+oauth2-proxy --convert-config-to-alpha --config ./path/to/existing/config.cfg
+```
+
+This will convert any options supported by the new format to YAML and print the
+new configuration to `STDOUT`.
+
+Copy this to a new file, remove any options from your existing configuration
+noted in [removed options](#removed-options) and then start OAuth2 Proxy using
+the new config.
+
+```bash
+oauth2-proxy --alpha-config ./path/to/new/config.yaml --config ./path/to/existing/config.cfg
+```
 
 ### Command Line Options
 

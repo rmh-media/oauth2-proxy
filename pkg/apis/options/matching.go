@@ -3,6 +3,7 @@ package options
 import (
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -42,6 +43,12 @@ func Match(matcher Matcher, request *http.Request) bool {
 
 // domainMatch will compare the value of the domain matcher with the given host and returns a bool
 func domainMatch(matcher Matcher, host string) bool {
+	if strings.HasPrefix(matcher.Value, "*.") {
+		pattern := "^.*\\." + strings.ReplaceAll(matcher.Value[2:], ".", "\\.") + "$"
+
+		re := regexp.MustCompile("^.*" + pattern)
+		return re.MatchString(host)
+	}
 	return matcher.Value == host
 }
 

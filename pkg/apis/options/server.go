@@ -144,7 +144,7 @@ func cookieDefaults() CookieOptions {
 		Refresh:        Duration(time.Duration(0)),
 		Secure:         true,
 		HTTPOnly:       true,
-		SameSite:       "",
+		SameSite:       "lax",
 		CSRFPerRequest: false,
 		CSRFExpire:     Duration(time.Duration(15) * time.Minute),
 	}
