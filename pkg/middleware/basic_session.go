@@ -69,7 +69,7 @@ func getBasicSession(validator basic.Validator, sessionGroups []string, req *htt
 		return nil, nil
 	}
 
-	user, password, err := findBasicCredentialsFromHeader(auth)
+	user, password, err := FindBasicCredentialsFromHeader(auth)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +84,9 @@ func getBasicSession(validator basic.Validator, sessionGroups []string, req *htt
 	return nil, nil
 }
 
-// findBasicCredentialsFromHeader finds basic auth credneitals from the
+// FindBasicCredentialsFromHeader  finds basic auth credentials from the
 // Authorization header of a given request.
-func findBasicCredentialsFromHeader(header string) (string, string, error) {
+func FindBasicCredentialsFromHeader(header string) (string, string, error) {
 	tokenType, token, err := splitAuthHeader(header)
 	if err != nil {
 		return "", "", err

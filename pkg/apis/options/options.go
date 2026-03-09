@@ -35,6 +35,8 @@ type Options struct {
 	HtpasswdFile            string   `flag:"htpasswd-file" cfg:"htpasswd_file"`
 	HtpasswdUserGroups      []string `flag:"htpasswd-user-group" cfg:"htpasswd_user_groups"`
 
+	SkipBasicAuthUsers []string `flag:"skip-basic-auth-user" cfg:"skip_basic_auth_user"`
+
 	Cookie    Cookie         `cfg:",squash"`
 	Session   SessionOptions `cfg:",squash"`
 	Logging   Logging        `cfg:",squash"`

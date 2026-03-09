@@ -2247,6 +2247,79 @@ func TestTrustedIPs(t *testing.T) {
 		})
 	}
 }
+func TestSkipBasicAuthUsers(t *testing.T) {
+	tests := []struct {
+		name               string
+		skipBasicAuthUsers []string
+		req                *http.Request
+		expectTrusted      bool
+	}{
+		{
+			name:               "Default",
+			skipBasicAuthUsers: nil,
+			req: func() *http.Request {
+				req, _ := http.NewRequest("GET", "/", nil)
+				return req
+			}(),
+			expectTrusted: false,
+		},
+		{
+			name:               "With Matching User",
+			skipBasicAuthUsers: []string{"FOO_BAR"},
+			req: func() *http.Request {
+				req, _ := http.NewRequest("GET", "/", nil)
+
+				// add basic auth user to the request
+				req.SetBasicAuth("FOO_BAR", "password")
+
+				return req
+			}(),
+			expectTrusted: true,
+		},
+		{
+			name:               "With non matching User",
+			skipBasicAuthUsers: []string{"FOO_BAR"},
+			req: func() *http.Request {
+				req, _ := http.NewRequest("GET", "/", nil)
+
+				// add basic auth user to the request
+				req.SetBasicAuth("FOO_BAR_FOO", "password")
+
+				return req
+			}(),
+			expectTrusted: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := baseTestOptions()
+			opts.UpstreamServers = options.UpstreamConfig{
+				Upstreams: []options.Upstream{
+					{
+						ID:     "static",
+						Path:   "/",
+						Static: ptr.To(true),
+					},
+				},
+			}
+			opts.SkipBasicAuthUsers = tt.skipBasicAuthUsers
+			err := validation.Validate(opts)
+			assert.NoError(t, err)
+
+			proxy, err := NewOAuthProxy(opts, func(string) bool { return true })
+			assert.NoError(t, err)
+			rw := httptest.NewRecorder()
+
+			proxy.ServeHTTP(rw, tt.req)
+			if tt.expectTrusted {
+				assert.Equal(t, 200, rw.Code)
+			} else {
+				assert.Equal(t, 403, rw.Code)
+			}
+		})
+	}
+}
 
 func Test_buildRoutesAllowlist(t *testing.T) {
 	type expectedAllowedRoute struct {

@@ -90,6 +90,7 @@ type OAuthProxy struct {
 	redirectURL          *url.URL // the url to receive requests at
 	relativeRedirectURL  bool
 	whitelistDomains     []string
+	skipBasicAuthUsers   []string
 	provider             providers.Provider
 	sessionStore         sessionsapi.SessionStore
 	ProxyPrefix          string
@@ -230,6 +231,7 @@ func NewOAuthProxy(opts *options.Options, validator func(string) bool) (*OAuthPr
 		apiRoutes:            apiRoutes,
 		allowedRoutes:        allowedRoutes,
 		whitelistDomains:     opts.WhitelistDomains,
+		skipBasicAuthUsers:   opts.SkipBasicAuthUsers,
 		skipAuthPreflight:    opts.SkipAuthPreflight,
 		skipJwtBearerTokens:  opts.SkipJwtBearerTokens,
 		realClientIPParser:   opts.GetRealClientIPParser(),
@@ -573,7 +575,7 @@ func (p *OAuthProxy) ErrorPage(rw http.ResponseWriter, req *http.Request, code i
 // IsAllowedRequest is used to check if auth should be skipped for this request
 func (p *OAuthProxy) IsAllowedRequest(req *http.Request) bool {
 	isPreflightRequestAllowed := p.skipAuthPreflight && req.Method == "OPTIONS"
-	return isPreflightRequestAllowed || p.isAllowedRoute(req) || p.isTrustedIP(req)
+	return isPreflightRequestAllowed || p.isAllowedRoute(req) || p.isTrustedIP(req) || p.isSkippingBasicAuthUsers(req)
 }
 
 func isAllowedMethod(req *http.Request, route allowedRoute) bool {
@@ -588,6 +590,28 @@ func isAllowedPath(req *http.Request, route allowedRoute) bool {
 	}
 
 	return matches
+}
+
+func (p *OAuthProxy) isSkippingBasicAuthUsers(req *http.Request) bool {
+
+	auth := req.Header.Get("Authorization")
+
+	if auth == "" {
+		return false
+	}
+
+	user, _, err := middleware.FindBasicCredentialsFromHeader(auth)
+
+	if err != nil {
+		return false
+	}
+
+	for _, u := range p.skipBasicAuthUsers {
+		if user == u {
+			return true
+		}
+	}
+	return false
 }
 
 // IsAllowedRoute is used to check if the request method & path is allowed without auth
